@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using XAssistant.Models;
+using PressViewer.Models;
 
-namespace XAssistant.Services.Interfaces;
+namespace PressViewer.Services.Interfaces;
 
 /// <summary>
 /// 负责点击记录的持久化存储（SQLite 等）。
@@ -21,4 +21,9 @@ public interface IClickDatabaseService
     Dictionary<string, int> GetClickCounts();
 
     Dictionary<string, int> GetClickCountsByDate(DateTime date);
+
+    /// <summary>
+    /// 获取 [from, to) 区间内各鼠标按键的点击次数（近七天/近三十天/自定义范围用）。
+    /// </summary>
+    Dictionary<string, int> GetClickCounts(DateTime from, DateTime toExclusive);
 }

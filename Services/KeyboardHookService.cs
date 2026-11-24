@@ -2,9 +2,9 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Extensions.Logging;
-using XAssistant.Services.Interfaces;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public class KeyboardHookService : IKeyboardHookService, IDisposable
 {
@@ -126,6 +126,46 @@ public class KeyboardHookService : IKeyboardHookService, IDisposable
         [0xA5] = "Right Alt", // VK_RMENU
     };
 
+    [DllImport("user32.dll")]
+    private static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
+    // 扫描码缺失时（注入键、虚拟键、部分固件）用虚拟键码兜底的功能键名
+    private static readonly Dictionary<int, string> VkNames = new()
+    {
+        [0x08] = "Backspace",
+        [0x09] = "Tab",
+        [0x0D] = "Enter",
+        [0x13] = "Pause",
+        [0x14] = "Caps Lock",
+        [0x1B] = "Esc",
+        [0x20] = "Space",
+        [0x21] = "Page Up",
+        [0x22] = "Page Down",
+        [0x23] = "End",
+        [0x24] = "Home",
+        [0x25] = "Left",
+        [0x26] = "Up",
+        [0x27] = "Right",
+        [0x28] = "Down",
+        [0x2C] = "Print Screen",
+        [0x2D] = "Insert",
+        [0x2E] = "Delete",
+        [0x90] = "Num Lock",
+        [0x91] = "Scroll Lock",
+        [0x6A] = "Multiply",
+        [0x6B] = "Add",
+        [0x6D] = "Subtract",
+        [0x6E] = "Decimal",
+        [0x6F] = "Divide",
+        [0xAD] = "Volume Mute",
+        [0xAE] = "Volume Down",
+        [0xAF] = "Volume Up",
+        [0xB0] = "Next Track",
+        [0xB1] = "Previous Track",
+        [0xB2] = "Stop Media",
+        [0xB3] = "Play/Pause",
+    };
+
     // 把扫描码 + 扩展标志合成 GetKeyNameText 所需的参数
     private string GetKeyNameFromScanCode(int vkCode, int scanCode, int flags)
     {
@@ -133,26 +173,51 @@ public class KeyboardHookService : IKeyboardHookService, IDisposable
         if (ModifierKeyNames.TryGetValue(vkCode, out var modifierName))
             return modifierName;
 
-        // 如果设置了扩展位（flags & 1），需要给扫描码加上 0x100
         bool isExtended = (flags & 1) != 0;
-        int lParamValue = (scanCode << 16) | (isExtended ? 0x1000000 : 0);
 
-        var sb = new StringBuilder(256);
-        int result = GetKeyNameText(lParamValue, sb, sb.Capacity);
-        if (result > 0)
-            return sb.ToString();
+        // 1. 正常路径：有扫描码时交给系统取名
+        if (scanCode > 0)
+        {
+            int lParamValue = (scanCode << 16) | (isExtended ? 0x1000000 : 0);
+            var sb = new StringBuilder(256);
+            if (GetKeyNameText(lParamValue, sb, sb.Capacity) > 0)
+                return sb.ToString();
+        }
 
-        // GetKeyNameText 无法命名（常见于笔记本 Fn 键等非标准键）。
-        // 扫描码 0x63 是多数笔记本 Fn 的扫描码；其余保留原始码值以便后续识别
+        // 笔记本 Fn 的常见扫描码
         if (scanCode == 0x63)
             return "Fn";
+
+        // 2. 扫描码缺失：用虚拟键码反查扫描码，再请系统取名
+        uint virtualScan = MapVirtualKey((uint)vkCode, 0);
+        if (virtualScan > 0)
+        {
+            int lParamValue = ((int)virtualScan << 16) | (isExtended ? 0x1000000 : 0);
+            var sb = new StringBuilder(256);
+            if (GetKeyNameText(lParamValue, sb, sb.Capacity) > 0)
+                return sb.ToString();
+        }
+
+        // 3. 可打印字符（字母、数字、标点）
+        uint ch = MapVirtualKey((uint)vkCode, 2);
+        if (ch > 0 && ch < 0x10000)
+            return ((char)ch).ToString();
+
+        // 4. 功能键名表
+        if (VkNames.TryGetValue(vkCode, out var vkName))
+            return vkName;
+
+        // 5. F1–F24
+        if (vkCode >= 0x70 && vkCode <= 0x87)
+            return $"F{vkCode - 0x70 + 1}";
+
         _logger.LogWarning(
             "按键无法识别，扫描码 0x{Scan:X2}，虚拟键码 0x{Vk:X2}，标志 0x{Flags:X2}",
             scanCode,
             vkCode,
             flags
         );
-        return $"Unknown (scan 0x{scanCode:X2}, vk 0x{vkCode:X2})";
+        return $"VK 0x{vkCode:X2}";
     }
 
     // 结构体定义

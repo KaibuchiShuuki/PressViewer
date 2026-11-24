@@ -3,9 +3,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using XAssistant.Models;
+using PressViewer.Models;
 
-namespace XAssistant.ViewModels;
+namespace PressViewer.ViewModels;
 
 public partial class HomeViewModel : ViewModelBase
 {
@@ -38,12 +38,18 @@ public partial class HomeViewModel : ViewModelBase
     public System.Windows.Media.Brush MouseRecordingColor => _clickCounter.MouseRecordingColor;
     public int MouseTodayClicks => _clickCounter.MouseTodayClicks;
     public int MouseTotalClicks => _clickCounter.MouseTotalClicks;
+    public int MouseLeftTotal => _clickCounter.LeftClickCount;
+    public int MouseMiddleTotal => _clickCounter.MiddleClickCount;
+    public int MouseRightTotal => _clickCounter.RightClickCount;
 
     // ========== 键盘记录模块 ==========
     public string KeyRecordingStatus => _keyCounter.KeyRecordingStatus;
     public System.Windows.Media.Brush KeyRecordingColor => _keyCounter.KeyRecordingColor;
     public int KeyTodayPresses => _keyCounter.KeyTodayPresses;
     public int KeyTotalPresses => _keyCounter.KeyTotalPresses;
+
+    /// <summary>首页热力图模块直接复用键盘页的实时计数集合。</summary>
+    public IEnumerable<KeyCountItem> HeatmapKeys => _keyCounter.KeyCounts;
 
     // ========== 电脑使用模块 ==========
     // 假设 UsageViewModel 里有 TodayUsageText 属性（带格式化时长）
@@ -69,6 +75,15 @@ public partial class HomeViewModel : ViewModelBase
                 break;
             case nameof(ClickCounterViewModel.MouseTotalClicks):
                 OnPropertyChanged(nameof(MouseTotalClicks));
+                break;
+            case nameof(ClickCounterViewModel.LeftClickCount):
+                OnPropertyChanged(nameof(MouseLeftTotal));
+                break;
+            case nameof(ClickCounterViewModel.MiddleClickCount):
+                OnPropertyChanged(nameof(MouseMiddleTotal));
+                break;
+            case nameof(ClickCounterViewModel.RightClickCount):
+                OnPropertyChanged(nameof(MouseRightTotal));
                 break;
         }
     }

@@ -2,7 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 /// <summary>
 /// 本机私有模块的挂载点。

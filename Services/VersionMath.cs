@@ -1,4 +1,4 @@
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 /// <summary>
 /// 版本号比较。抽成独立文件是因为它是**纯函数** —— 不碰 HTTP、不碰界面，

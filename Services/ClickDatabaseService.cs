@@ -1,9 +1,9 @@
 using System.IO;
 using Microsoft.Data.Sqlite;
-using XAssistant.Models;
-using XAssistant.Services.Interfaces;
+using PressViewer.Models;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public class ClickDatabaseService : IClickDatabaseService
 {
@@ -67,6 +67,34 @@ public class ClickDatabaseService : IClickDatabaseService
         WHERE date(ClickTime) = @date
         GROUP BY Button";
         cmd.Parameters.AddWithValue("@date", dateStr);
+
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+            counts[reader.GetString(0)] = reader.GetInt32(1);
+
+        return counts;
+    }
+
+    public Dictionary<string, int> GetClickCounts(DateTime from, DateTime toExclusive)
+    {
+        var counts = new Dictionary<string, int>
+        {
+            { "Left", 0 },
+            { "Middle", 0 },
+            { "Right", 0 },
+        };
+
+        using var connection = new SqliteConnection(ConnectionString);
+        connection.Open();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText =
+            @"
+        SELECT Button, COUNT(*)
+        FROM ClickRecords
+        WHERE ClickTime >= @from AND ClickTime < @to
+        GROUP BY Button";
+        cmd.Parameters.AddWithValue("@from", from.ToString("o"));
+        cmd.Parameters.AddWithValue("@to", toExclusive.ToString("o"));
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())

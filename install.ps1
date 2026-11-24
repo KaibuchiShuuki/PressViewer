@@ -1,14 +1,14 @@
-﻿<#
+<#
 .SYNOPSIS
-    安装或升级 XAssistant。
+    安装或升级 PressViewer。
 .DESCRIPTION
     Release 包内运行时：
       不带参数        安装/升级主程序和后台服务
       -AppOnly        只安装/升级主程序（不改动后台服务）
       -ServiceOnly    只安装/更新后台服务（不改动主程序）
-    源码目录运行时：构建并部署主程序；后台服务请用 XAssistant.Service\publish-and-install.ps1。
+    源码目录运行时：构建并部署主程序；后台服务请用 PressViewer.Service\publish-and-install.ps1。
 .PARAMETER InstallDir
-    指定安装目录。不指定时优先从运行中的 XAssistant、自启任务或后台服务反查。
+    指定安装目录。不指定时优先从运行中的 PressViewer、自启任务或后台服务反查。
 .PARAMETER AppOnly
     只处理主程序。
 .PARAMETER ServiceOnly
@@ -26,10 +26,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$processName = "XAssistant"
+$processName = "PressViewer"
 $serviceName = "XAssistant.UsageTracker"
 $scriptDir = $PSScriptRoot
-$hasSource = Test-Path (Join-Path $scriptDir "XAssistant.csproj")
+$hasSource = Test-Path (Join-Path $scriptDir "PressViewer.csproj")
 if ($hasSource) {
     $packageDir = $scriptDir
     $packageAppDir = $null
@@ -91,7 +91,7 @@ function Resolve-InstallDir {
     if ($service -and $service.PathName) {
         $serviceExe = $service.PathName.Trim('"')
         $candidate = Split-Path -Parent (Split-Path -Parent $serviceExe)
-        if (Test-Path (Join-Path $candidate "XAssistant.Service\XAssistant.Service.exe")) {
+        if (Test-Path (Join-Path $candidate "PressViewer.Service\PressViewer.Service.exe")) {
             return $candidate
         }
     }
@@ -101,7 +101,7 @@ function Resolve-InstallDir {
 # 处理范围
 if ($hasSource) {
     if ($ServiceOnly) {
-        throw "源码模式请用 XAssistant.Service\publish-and-install.ps1 更新后台服务。"
+        throw "源码模式请用 PressViewer.Service\publish-and-install.ps1 更新后台服务。"
     }
     $doApp = $true
     $doService = $false
@@ -143,14 +143,14 @@ if ($hasSource) {
     $sourceServiceDir = $null
 } else {
     $sourceDir = $packageAppDir
-    $sourceServiceDir = Join-Path $packageDir "XAssistant.Service"
+    $sourceServiceDir = Join-Path $packageDir "PressViewer.Service"
 }
 
-$appSource = Join-Path $sourceDir "XAssistant.exe"
+$appSource = Join-Path $sourceDir "PressViewer.exe"
 if ($doApp -and -not $hasSource -and -not (Test-Path $appSource)) {
-    throw "没有找到 XAssistant.exe：$sourceDir"
+    throw "没有找到 PressViewer.exe：$sourceDir"
 }
-if ($doService -and -not (Test-Path (Join-Path $sourceServiceDir "XAssistant.Service.exe"))) {
+if ($doService -and -not (Test-Path (Join-Path $sourceServiceDir "PressViewer.Service.exe"))) {
     throw "安装包缺少后台服务文件：$sourceServiceDir"
 }
 
@@ -170,12 +170,12 @@ if (-not $CheckOnly -and -not $runtimeOk) {
 $targetDir = Resolve-InstallDir $InstallDir
 if ([string]::IsNullOrWhiteSpace($targetDir)) {
     if ($CheckOnly) {
-        Write-Host "未找到现有安装（正式运行会提示输入目录，默认 C:\XAssistant）。" -ForegroundColor Yellow
-        $targetDir = "C:\XAssistant"
+        Write-Host "未找到现有安装（正式运行会提示输入目录，默认 C:\PressViewer）。" -ForegroundColor Yellow
+        $targetDir = "C:\PressViewer"
     } else {
-        $entered = Read-Host "没有找到现有安装。请输入安装目录（直接回车使用 C:\XAssistant）"
+        $entered = Read-Host "没有找到现有安装。请输入安装目录（直接回车使用 C:\PressViewer）"
         if ([string]::IsNullOrWhiteSpace($entered)) {
-            $entered = "C:\XAssistant"
+            $entered = "C:\PressViewer"
         }
         $targetDir = $entered
     }
@@ -188,21 +188,21 @@ if ($targetDir -match '^[A-Za-z]:\\?$') {
     throw "安装目录不能是盘符根目录：$targetDir"
 }
 $targetDir = $targetDir.TrimEnd('\')
-$appExe = Join-Path $targetDir "XAssistant.exe"
-$targetServiceDir = Join-Path $targetDir "XAssistant.Service"
+$appExe = Join-Path $targetDir "PressViewer.exe"
+$targetServiceDir = Join-Path $targetDir "PressViewer.Service"
 $installInPlace = $targetDir -ieq $packageDir.TrimEnd('\')
 if ($installInPlace) {
-    throw "不要直接安装到解压目录；请换一个安装目录（例如 C:\XAssistant）。"
+    throw "不要直接安装到解压目录；请换一个安装目录（例如 C:\PressViewer）。"
 }
 if ($packageAppDir -and ($targetDir -ieq $packageAppDir.TrimEnd('\'))) {
-    throw "不要直接安装到 app 目录；请换一个安装目录（例如 C:\XAssistant）。"
+    throw "不要直接安装到 app 目录；请换一个安装目录（例如 C:\PressViewer）。"
 }
 
-$looksLikeInstall = (Test-Path $appExe) -or (Test-Path (Join-Path $targetServiceDir "XAssistant.Service.exe"))
+$looksLikeInstall = (Test-Path $appExe) -or (Test-Path (Join-Path $targetServiceDir "PressViewer.Service.exe"))
 if ((Test-Path $targetDir) -and -not $installInPlace -and -not $looksLikeInstall) {
     $existing = @(Get-ChildItem -Path $targetDir -Force -ErrorAction SilentlyContinue)
     if ($existing.Count -gt 0) {
-        throw "目标目录不是空的，也不是 XAssistant 安装目录：$targetDir"
+        throw "目标目录不是空的，也不是 PressViewer 安装目录：$targetDir"
     }
 }
 
@@ -227,12 +227,12 @@ $failed = $false
 try {
     if ($hasSource -and $doApp) {
         Write-Host "[1/5] 构建主程序..." -ForegroundColor Cyan
-        dotnet publish (Join-Path $packageDir "XAssistant.csproj") -r win-x64 -c Release --self-contained false
+        dotnet publish (Join-Path $packageDir "PressViewer.csproj") -r win-x64 -c Release --self-contained false
         if ($LASTEXITCODE -ne 0) {
             throw "dotnet publish 失败。"
         }
         if (-not (Test-Path $appSource)) {
-            throw "构建后仍找不到 XAssistant.exe：$sourceDir"
+            throw "构建后仍找不到 PressViewer.exe：$sourceDir"
         }
     } else {
         Write-Host "[1/5] 使用安装包里的文件。" -ForegroundColor Cyan
@@ -247,17 +247,17 @@ try {
     if ($doService) {
         Write-Host "[3/5] 停止后台服务..." -ForegroundColor Cyan
         Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
-        Get-Process -Name "XAssistant.Service" -ErrorAction SilentlyContinue | Wait-Process -Timeout 15 -ErrorAction SilentlyContinue
+        Get-Process -Name "PressViewer.Service" -ErrorAction SilentlyContinue | Wait-Process -Timeout 15 -ErrorAction SilentlyContinue
     }
 
     Write-Host "[4/5] 备份并替换文件..." -ForegroundColor Cyan
     if (-not $installInPlace) {
         if (Test-Path $targetDir) {
             $backupParent = Split-Path -Parent $targetDir
-            $backupDir = Join-Path $backupParent ("XAssistant_Backup_" + (Get-Date -Format "yyyyMMdd_HHmmss"))
+            $backupDir = Join-Path $backupParent ("PressViewer_Backup_" + (Get-Date -Format "yyyyMMdd_HHmmss"))
             Write-Host "    备份到 $backupDir ..."
             Copy-Item -Path $targetDir -Destination $backupDir -Recurse -Force
-            Get-ChildItem -Path $backupParent -Directory -Filter "XAssistant_Backup_*" -ErrorAction SilentlyContinue |
+            Get-ChildItem -Path $backupParent -Directory -Filter "PressViewer_Backup_*" -ErrorAction SilentlyContinue |
                 Sort-Object LastWriteTime -Descending |
                 Select-Object -Skip 3 |
                 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
@@ -265,7 +265,7 @@ try {
         New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
         if ($doApp) {
             Get-ChildItem -Path $targetDir -Force |
-                Where-Object { $_.Name -ne "XAssistant.Service" } |
+                Where-Object { $_.Name -ne "PressViewer.Service" } |
                 Remove-Item -Recurse -Force
             Copy-Item -Path (Join-Path $sourceDir "*") -Destination $targetDir -Recurse -Force
             # 安装实现只服务于解压目录里的 install*.cmd，装进目标目录没有用处
@@ -304,13 +304,13 @@ try {
     Write-Host "安装完成。" -ForegroundColor Green
     if ($doApp) { Write-Host "主程序已启动。" -ForegroundColor Green }
     if ($doService) { Write-Host "后台服务已更新。" -ForegroundColor Green }
-    Write-Host "数据目录：%APPDATA%\XAssistant 和 C:\ProgramData\XAssistant\UsageTracker" -ForegroundColor Gray
+    Write-Host "数据目录：%APPDATA%\PressViewer 和 C:\ProgramData\XAssistant\UsageTracker" -ForegroundColor Gray
 } catch {
     $failed = $true
     Write-Host "安装失败：$($_.Exception.Message)" -ForegroundColor Red
     if ($doApp -and (Test-Path $appExe)) {
         Write-Host "安装目录：$targetDir" -ForegroundColor Yellow
-        Write-Host "可以手动双击 XAssistant.exe 启动旧版本。" -ForegroundColor Yellow
+        Write-Host "可以手动双击 PressViewer.exe 启动旧版本。" -ForegroundColor Yellow
     }
 }
 

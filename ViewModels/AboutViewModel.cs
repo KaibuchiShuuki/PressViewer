@@ -4,10 +4,10 @@ using System.IO;
 using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using XAssistant.Models;
-using XAssistant.Services;
+using PressViewer.Models;
+using PressViewer.Services;
 
-namespace XAssistant.ViewModels;
+namespace PressViewer.ViewModels;
 
 /// <summary>
 /// 「关于」页：当前版本、手动检查更新、更新日志。
@@ -15,7 +15,7 @@ namespace XAssistant.ViewModels;
 /// </summary>
 public partial class AboutViewModel : ViewModelBase
 {
-    private const string ChangelogResourceName = "XAssistant.CHANGELOG.md";
+    private const string ChangelogResourceName = "PressViewer.CHANGELOG.md";
 
     private readonly UpdateService _updateService;
     private bool _updateHasNew;
@@ -27,7 +27,7 @@ public partial class AboutViewModel : ViewModelBase
     }
 
     /// <summary>例如 v1.0.1（f620a07）。</summary>
-    public string VersionText => "v" + AppVersion.Display;
+    public string VersionText => "v" + AppVersion.SemVer;
 
     public ObservableCollection<ChangelogSection> Changelog { get; } = new();
 

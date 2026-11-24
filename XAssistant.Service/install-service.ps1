@@ -1,8 +1,8 @@
-﻿<#
+<#
 .SYNOPSIS
     从已构建产物安装 XAssistant.UsageTracker Windows 服务（无需 .NET SDK）
 .DESCRIPTION
-    适用于本目录下已包含 XAssistant.Service.exe 等发布产物的情况；
+    适用于本目录下已包含 PressViewer.Service.exe 等发布产物的情况；
     需要构建源码 + 发布请使用 publish-and-install.ps1。
 .NOTES
     需要以管理员身份运行此脚本
@@ -10,7 +10,7 @@
 
 param(
     [string]$ServiceName = "XAssistant.UsageTracker",
-    [string]$DisplayName = "XAssistant 使用时长追踪服务",
+    [string]$DisplayName = "PressViewer 使用时长追踪服务",
     [string]$Description = "负责记录每日 PC 使用时长，通过 Named Pipe 向客户端提供数据。"
 )
 
@@ -24,7 +24,7 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # ===== 1. 定位可执行文件 =====
-$exePath = Join-Path $PSScriptRoot "XAssistant.Service.exe"
+$exePath = Join-Path $PSScriptRoot "PressViewer.Service.exe"
 if (-not (Test-Path $exePath)) {
     Write-Error "未找到服务可执行文件: $exePath"
     exit 1
@@ -37,7 +37,7 @@ if ($existing) {
     Stop-Service $ServiceName -Force -ErrorAction SilentlyContinue
 
     Write-Host "等待服务进程退出..." -ForegroundColor Yellow
-    $serviceProcess = Get-Process -Name "XAssistant.Service" -ErrorAction SilentlyContinue
+    $serviceProcess = Get-Process -Name "PressViewer.Service" -ErrorAction SilentlyContinue
     if ($serviceProcess) {
         $serviceProcess.WaitForExit(10000)
         if (-not $serviceProcess.HasExited) {

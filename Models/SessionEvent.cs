@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace XAssistant.Models;
+namespace PressViewer.Models;
 
 public partial class SessionEvent : ObservableObject
 {

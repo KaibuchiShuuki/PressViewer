@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using XAssistant.Models;
-using XAssistant.Services.Interfaces;
+using PressViewer.Models;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public class ConfigurationService : IConfigurationService
 {
@@ -70,6 +70,64 @@ public class ConfigurationService : IConfigurationService
     }
 
     public bool GetKeyRecordingAutoStart() => _appSettings.Recording.AutoStartKeyRecording;
+
+    public void SetGamepadRecordingAutoStart(bool enabled)
+    {
+        _appSettings.Recording.AutoStartGamepadRecording = enabled;
+        Save();
+    }
+
+    public bool GetGamepadRecordingAutoStart() => _appSettings.Recording.AutoStartGamepadRecording;
+
+    // ---------- 外观 ----------
+    public string GetTheme() => _appSettings.Appearance.Theme;
+
+    public void SetTheme(string theme)
+    {
+        _appSettings.Appearance.Theme = theme;
+        Save();
+    }
+
+    public bool GetDarkMode() => _appSettings.Appearance.DarkMode;
+
+    public void SetDarkMode(bool dark)
+    {
+        _appSettings.Appearance.DarkMode = dark;
+        Save();
+    }
+
+    public bool GetShowThousandsSeparator() => _appSettings.Appearance.ShowThousandsSeparator;
+
+    public bool GetCompactSmallNumbers() => _appSettings.Appearance.CompactSmallNumbers;
+
+    public void SetCompactSmallNumbers(bool enabled)
+    {
+        _appSettings.Appearance.CompactSmallNumbers = enabled;
+        Save();
+    }
+
+    public void SetShowThousandsSeparator(bool show)
+    {
+        _appSettings.Appearance.ShowThousandsSeparator = show;
+        Save();
+    }
+
+    // ---------- 行为 ----------
+    public string GetCloseAction() => _appSettings.General.CloseAction;
+
+    public void SetCloseAction(string action)
+    {
+        _appSettings.General.CloseAction = action;
+        Save();
+    }
+
+    public bool GetAutoStartMonitoring() => _appSettings.General.AutoStartMonitoring;
+
+    public void SetAutoStartMonitoring(bool autoStart)
+    {
+        _appSettings.General.AutoStartMonitoring = autoStart;
+        Save();
+    }
 
     public double GetWindowWidth() => _appSettings.General.WindowWidth;
 

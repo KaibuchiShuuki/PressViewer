@@ -1,5 +1,5 @@
-﻿<#
-  看 / 切换 XAssistant 的开机自启注册点。
+<#
+  看 / 切换 PressViewer 的开机自启注册点。
 
   为什么要有它：自启现在挂**两条路** ——
     · 计划任务「登录时触发、立即拉起」：主路，负责提前；程序会等用户配置就绪后开始记录
@@ -11,11 +11,11 @@
   取决于机器和用户配置就绪时间，通常远快于 Run 键。
 
   用法（默认只看不动手）：
-    powershell -ExecutionPolicy Bypass -File D:\code\XAssistant\tools\xassistant-autostart.ps1
+    powershell -ExecutionPolicy Bypass -File D:\code\PressViewer\tools\pressviewer-autostart.ps1
     # 把正式版升级成计划任务 + 顺手修正 Run 值（补引号、补 --silent）
-    powershell -ExecutionPolicy Bypass -File D:\code\XAssistant\tools\xassistant-autostart.ps1 -Apply
+    powershell -ExecutionPolicy Bypass -File D:\code\PressViewer\tools\pressviewer-autostart.ps1 -Apply
     # 回滚成纯 Run 键
-    powershell -ExecutionPolicy Bypass -File D:\code\XAssistant\tools\xassistant-autostart.ps1 -Rollback
+    powershell -ExecutionPolicy Bypass -File D:\code\PressViewer\tools\pressviewer-autostart.ps1 -Rollback
 
   前置：-Apply / -Rollback 要求目标 exe 是**带这个功能的新版本**
   （它靠 --register-startup / --unregister-startup 干活；旧版本会把这个参数当普通启动参数、直接开窗）。
@@ -23,8 +23,8 @@
 param(
   [switch]$Apply,
   [switch]$Rollback,
-  [string]$Exe = 'C:\XAssistant\XAssistant.exe',
-  [string]$TaskName = 'XAssistant'
+  [string]$Exe = 'C:\PressViewer\PressViewer.exe',
+  [string]$TaskName = 'PressViewer'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,7 +71,7 @@ function Show-Registration {
 
 function Show-Timing {
   Write-Host '── 最近几次「登录 → 应用启动」的间隔（正式版日志）──' -ForegroundColor Cyan
-  $logDir = Join-Path $env:APPDATA 'XAssistant\logs'
+  $logDir = Join-Path $env:APPDATA 'PressViewer\logs'
   if (-not (Test-Path $logDir)) {
     Write-Host ("  找不到日志目录：{0}" -f $logDir) -ForegroundColor DarkGray
     return
@@ -87,7 +87,7 @@ function Show-Timing {
 
   $rows = @()
   foreach ($d in ($logons.Keys | Sort-Object -Descending)) {
-    $file = Join-Path $logDir ('xassistant-{0}.log' -f ($d -replace '-', ''))
+    $file = Join-Path $logDir ('pressviewer-{0}.log' -f ($d -replace '-', ''))
     if (-not (Test-Path $file)) { continue }
 
     $earliest = $null

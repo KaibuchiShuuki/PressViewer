@@ -1,0 +1,183 @@
+<UserControl
+  x:Class="PressViewer.Views.SettingsView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:conv="clr-namespace:PressViewer.Converters"
+  Background="{DynamicResource BgBrush}">
+
+  <UserControl.Resources>
+    <conv:ColorToBrushConverter x:Key="ColorToBrush" />
+
+    <Style x:Key="ThemeItem" TargetType="ListBoxItem">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Margin" Value="0,0,8,8" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border
+              x:Name="Bd"
+              Padding="12,8"
+              AutomationProperties.Name="{Binding DisplayName}"
+              Background="Transparent"
+              BorderBrush="Transparent"
+              BorderThickness="1"
+              CornerRadius="12">
+              <StackPanel Orientation="Horizontal">
+                <Border
+                  Width="18"
+                  Height="18"
+                  Margin="0,0,8,0"
+                  Background="{Binding Accent, Converter={StaticResource ColorToBrush}}"
+                  CornerRadius="9" />
+                <TextBlock
+                  VerticalAlignment="Center"
+                  FontSize="13"
+                  Foreground="{DynamicResource InkBrush}"
+                  Text="{Binding DisplayName}" />
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource NavHoverBrush}" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="SettingLabel" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13.5" />
+      <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+    </Style>
+
+    <Style x:Key="SettingHint" TargetType="TextBlock">
+      <Setter Property="Margin" Value="0,4,0,0" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+  </UserControl.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel MaxWidth="860" Margin="30,26,30,30" HorizontalAlignment="Left">
+
+      <TextBlock Style="{StaticResource PageTitle}" Text="设置" />
+      <TextBlock
+        Margin="0,6,0,20"
+        Style="{StaticResource MutedText}"
+        Text="外观、行为与数据。改动即时生效并自动保存。" />
+
+      <!--  外观  -->
+      <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Style="{StaticResource SectionTitle}" Text="外观" />
+
+          <TextBlock Margin="0,16,0,8" Style="{StaticResource SettingLabel}" Text="主题色" />
+          <ListBox
+            Background="Transparent"
+            BorderThickness="0"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ItemContainerStyle="{StaticResource ThemeItem}"
+            ItemsSource="{Binding Themes}"
+            SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="3" />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+          </ListBox>
+
+          <CheckBox Margin="0,6,0,0" Content="深色模式" IsChecked="{Binding IsDarkMode, Mode=TwoWay}" />
+          <TextBlock Style="{StaticResource SettingHint}" Text="深色模式与主题色可以任意搭配，热力图配色会跟着主题走。" />
+        </StackPanel>
+      </Border>
+
+      <!--  行为  -->
+      <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Style="{StaticResource SectionTitle}" Text="行为" />
+
+          <CheckBox
+            Margin="0,16,0,0"
+            Content="开机自动启动"
+            IsChecked="{Binding IsStartWithWindows, Mode=TwoWay}" />
+          <TextBlock Style="{StaticResource SettingHint}" Text="登录时以静默方式启动，不弹出窗口，只在托盘驻留并开始记录。" />
+
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="220" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Style="{StaticResource SettingLabel}" Text="关闭窗口时" />
+              <TextBlock Style="{StaticResource SettingHint}" Text="「最小化到托盘」会继续记录；「直接退出」等同托盘菜单里的退出。" />
+            </StackPanel>
+            <ComboBox
+              Grid.Column="1"
+              VerticalAlignment="Top"
+              SelectedIndex="{Binding CloseActionIndex, Mode=TwoWay}">
+              <ComboBoxItem Content="最小化到托盘" />
+              <ComboBoxItem Content="直接退出" />
+            </ComboBox>
+          </Grid>
+
+          <CheckBox
+            Margin="0,18,0,0"
+            Content="启动时自动开始监测"
+            IsChecked="{Binding IsAutoStartMonitoring, Mode=TwoWay}" />
+          <TextBlock Style="{StaticResource SettingHint}" Text="关闭后启动只统计不使用；之后在对应页面点「开始记录」仍可手动开启。" />
+        </StackPanel>
+      </Border>
+
+      <!--  数字与数据  -->
+      <Border Style="{StaticResource Card}">
+        <StackPanel>
+          <TextBlock Style="{StaticResource SectionTitle}" Text="数字与数据" />
+
+          <CheckBox
+            Margin="0,16,0,0"
+            Content="显示千分位分隔符"
+            IsChecked="{Binding ShowThousandsSeparator, Mode=TwoWay}" />
+          <TextBlock Style="{StaticResource SettingHint}" Text="影响所有计数：首页、热力图、表格与汇总。" />
+
+          <CheckBox
+            Margin="0,14,0,0"
+            Content="小按键用 K / M 缩写"
+            IsChecked="{Binding CompactSmallNumbers, Mode=TwoWay}" />
+          <TextBlock Style="{StaticResource SettingHint}" Text="滚轮、肩键、ABXY 等面积小的按键，次数超过 999 时显示为 1.2K、1.3M，避免数字溢出图形。" />
+
+          <Separator Margin="0,18,0,14" />
+
+          <TextBlock Style="{StaticResource SettingLabel}" Text="数据目录" />
+          <TextBlock
+            Margin="0,4,0,10"
+            FontSize="12.5"
+            Foreground="{DynamicResource SubInkBrush}"
+            Text="{Binding DataFolder}"
+            TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal">
+            <Button
+              MinWidth="110"
+              Command="{Binding OpenDataFolderCommand}"
+              Content="打开数据目录" />
+            <Button
+              MinWidth="110"
+              Margin="10,0,0,0"
+              Command="{Binding OpenLogFolderCommand}"
+              Content="打开日志目录" />
+          </StackPanel>
+
+          <TextBlock
+            Margin="0,16,0,0"
+            Style="{StaticResource SettingHint}"
+            Text="{Binding VersionText, StringFormat=当前版本 {0}}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

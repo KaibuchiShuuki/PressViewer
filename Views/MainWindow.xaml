@@ -1,120 +1,108 @@
 <Window
-  x:Class="XAssistant.Views.MainWindow"
+  x:Class="PressViewer.Views.MainWindow"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  Title="XAssistant"
+  Title="PressViewer"
+  Icon="/Assets/app-icon.ico"
   Width="{Binding WindowWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-  Height="{Binding WindowHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
+  Height="{Binding WindowHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+  Background="{DynamicResource BgBrush}"
+  FontFamily="Segoe UI, Microsoft YaHei UI"
+  WindowStartupLocation="CenterScreen">
 
-    <!--  第一行：原有的主界面  -->
-    <DockPanel Grid.Row="0">
-      <!--  左侧菜单  -->
-      <StackPanel
-        Width="200"
-        Background="#F0F0F0"
-        DockPanel.Dock="Left">
-        <Button
-          Command="{Binding NavigateCommand}"
-          CommandParameter="Home"
-          Content="首页" />
-        <Button
-          Command="{Binding NavigateCommand}"
-          CommandParameter="ClickCounter"
-          Content="鼠标点击记录" />
-        <Button
-          Command="{Binding NavigateCommand}"
-          CommandParameter="KeyCounter"
-          Content="键盘记录" />
-        <Button
-          Command="{Binding NavigateCommand}"
-          CommandParameter="Usage"
-          Content="电脑使用统计" />
-        <Button
-          Command="{Binding NavigateCommand}"
-          CommandParameter="AppUsage"
-          Content="软件使用" />
-        <Separator Margin="0,20,0,5" />
-        <Button
-          x:Name="AboutNavButton"
-          Command="{Binding NavigateCommand}"
-          CommandParameter="About"
-          Content="关于" />
-        <Separator Margin="0,10,0,5" />
-        <CheckBox
-          Margin="10,5"
-          Content="开机自动启动"
-          IsChecked="{Binding IsStartWithWindowsEnabled}"
-          ToolTip="登录后约 8 秒拉起（计划任务优先，注册表 Run 键兜底）" />
-      </StackPanel>
-
-      <!--  右侧内容区  -->
-      <ContentControl Content="{Binding CurrentViewModel}" />
-    </DockPanel>
-
-    <!--  第二行：全局日志面板  -->
-    <Expander
-      Grid.Row="1"
-      Margin="5"
-      Header="应用日志"
-      IsExpanded="{Binding IsLogExpanded, Mode=TwoWay}">
+  <DockPanel>
+    <!--  左侧栏  -->
+    <Border
+      Width="216"
+      Background="{DynamicResource CardBrush}"
+      BorderBrush="{DynamicResource CardBorderBrush}"
+      BorderThickness="0,0,1,0"
+      DockPanel.Dock="Left">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
-          <RowDefinition Height="200" />
-          <!--  固定高度，也可设 * 但建议固定  -->
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  工具栏  -->
+        <!--  品牌区  -->
         <StackPanel
           Grid.Row="0"
-          Margin="5"
+          Margin="24,26,24,18"
           Orientation="Horizontal">
-          <TextBlock VerticalAlignment="Center" Text="筛选级别：" />
-          <ComboBox
-            Width="120"
-            Margin="5,0"
-            ItemsSource="{Binding LogLevelOptions}"
-            SelectedItem="{Binding LogLevelFilter}" />
-          <Button
-            Margin="10,0,0,0"
-            Command="{Binding ClearLogsCommand}"
-            Content="清空日志" />
+          <Image
+            Width="30"
+            Height="30"
+            Margin="0,0,10,0"
+            Source="/Assets/logo.png"
+            SnapsToDevicePixels="True" />
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock
+              FontSize="19"
+              FontWeight="SemiBold"
+              Foreground="{DynamicResource InkBrush}"
+              Text="PressViewer" />
+            <TextBlock
+              Margin="0,3,0,0"
+              FontSize="11.5"
+              Foreground="{DynamicResource MutedBrush}"
+              Text="输入与使用统计" />
+          </StackPanel>
         </StackPanel>
 
-        <!--  日志列表  -->
-        <ListView
+        <!--  导航  -->
+        <ListBox
+          x:Name="NavList"
           Grid.Row="1"
-          BorderBrush="Gray"
-          BorderThickness="1"
-          ItemsSource="{Binding FilteredLogs}"
-          VirtualizingPanel.ScrollUnit="Pixel">
-          <ListView.View>
-            <GridView>
-              <GridViewColumn
-                Width="200"
-                DisplayMemberBinding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss.fff'}"
-                Header="时间" />
-              <GridViewColumn
-                Width="80"
-                DisplayMemberBinding="{Binding Level}"
-                Header="级别" />
-              <GridViewColumn
-                Width="120"
-                DisplayMemberBinding="{Binding SourceContext}"
-                Header="来源" />
-              <GridViewColumn
-                Width="500"
-                DisplayMemberBinding="{Binding Message}"
-                Header="消息" />
-            </GridView>
-          </ListView.View>
-        </ListView>
+          Background="Transparent"
+          BorderThickness="0"
+          ItemContainerStyle="{StaticResource NavItemStyle}"
+          SelectedValue="{Binding CurrentPage, Mode=TwoWay}"
+          SelectedValuePath="Tag">
+          <ListBoxItem
+            Content="首页"
+            Tag="Home" />
+          <ListBoxItem
+            Content="热力图"
+            Tag="Heatmap" />
+          <ListBoxItem
+            Content="鼠标点击记录"
+            Tag="ClickCounter" />
+          <ListBoxItem
+            Content="键盘按键记录"
+            Tag="KeyCounter" />
+          <ListBoxItem
+            Content="手柄按键记录"
+            Tag="GamepadCounter" />
+          <ListBoxItem
+            Content="电脑使用统计"
+            Tag="Usage" />
+          <ListBoxItem
+            Content="软件使用"
+            Tag="AppUsage" />
+          <ListBoxItem
+            Content="应用日志"
+            Tag="Logs" />
+          <ListBoxItem
+            Content="设置"
+            Tag="Settings" />
+          <ListBoxItem
+            Margin="12,20,12,2"
+            Content="关于"
+            Tag="About" />
+        </ListBox>
+
+        <!--  底部版本号  -->
+        <TextBlock
+          Grid.Row="2"
+          Margin="24,10,24,18"
+          FontSize="11.5"
+          Foreground="{DynamicResource MutedBrush}"
+          Text="{Binding VersionText, StringFormat=v{0}}" />
       </Grid>
-    </Expander>
-  </Grid>
+    </Border>
+
+    <!--  右侧内容区  -->
+    <ContentControl Content="{Binding CurrentViewModel}" />
+  </DockPanel>
 </Window>

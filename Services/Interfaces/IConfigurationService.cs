@@ -1,46 +1,57 @@
 // Services/Interfaces/IConfigurationService.cs
-using XAssistant.Models;
+using PressViewer.Models;
 
-namespace XAssistant.Services.Interfaces;
+namespace PressViewer.Services.Interfaces;
 
 /// <summary>
-/// 应用程序配置服务，管理各类持久化设置。
+/// 应用配置服务：读写持久化设置（记录开关、窗口、外观、关闭行为）。
 /// </summary>
 public interface IConfigurationService
 {
-    /// <summary>
-    /// 当前应用配置。
-    /// </summary>
     AppSettings Settings { get; }
 
-    /// <summary>
-    /// 获取上次程序退出时是否处于鼠标点击录制状态的配置。
-    /// </summary>
     bool GetRecordingAutoStart();
-
-    /// <summary>
-    /// 设置鼠标点击录制状态（用于下次启动自动恢复）。
-    /// </summary>
     void SetRecordingAutoStart(bool isRecording);
 
-    /// <summary>
-    /// 获取上次程序退出时是否处于键盘按键录制状态的配置。
-    /// </summary>
     bool GetKeyRecordingAutoStart();
-
-    /// <summary>
-    /// 设置键盘按键录制状态。
-    /// </summary>
     void SetKeyRecordingAutoStart(bool autoStart);
 
-    // ---------- 窗口位置/状态 ----------
+    bool GetGamepadRecordingAutoStart();
+    void SetGamepadRecordingAutoStart(bool autoStart);
+
+    // ---------- 窗口 ----------
     double GetWindowWidth();
     void SetWindowWidth(double width);
 
     double GetWindowHeight();
     void SetWindowHeight(double height);
 
-    // ---------- 日志面板状态 ----------
+    // ---------- 日志面板 ----------
     bool GetIsLogExpanded();
     void SetIsLogExpanded(bool expanded);
+
+    // ---------- 外观 ----------
+    string GetTheme();
+    void SetTheme(string theme);
+
+    bool GetDarkMode();
+    void SetDarkMode(bool dark);
+
+    bool GetShowThousandsSeparator();
+
+    bool GetCompactSmallNumbers();
+
+    void SetCompactSmallNumbers(bool enabled);
+    void SetShowThousandsSeparator(bool show);
+
+    // ---------- 行为 ----------
+    /// <summary>Minimize = 关窗口时隐藏到托盘；Exit = 直接退出。</summary>
+    string GetCloseAction();
+    void SetCloseAction(string action);
+
+    bool GetAutoStartMonitoring();
+    void SetAutoStartMonitoring(bool autoStart);
+
+    /// <summary>把内存中的设置写回 appsettings.json。</summary>
+    void Save();
 }

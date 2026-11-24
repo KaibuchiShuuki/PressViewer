@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Data.Sqlite;
-using XAssistant.Models;
-using XAssistant.Services.Interfaces;
+using PressViewer.Models;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public class KeyDatabaseService : IKeyDatabaseService
 {

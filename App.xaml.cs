@@ -5,23 +5,23 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using Serilog;
-using XAssistant.Services;
-using XAssistant.Services.Interfaces;
-using XAssistant.ViewModels;
-using XAssistant.Views;
+using PressViewer.Services;
+using PressViewer.Services.Interfaces;
+using PressViewer.ViewModels;
+using PressViewer.Views;
 
-namespace XAssistant;
+namespace PressViewer;
 
 public partial class App : System.Windows.Application
 {
     /// <summary>
     /// 自启用的应用名 —— 同时是注册表 Run 值名与计划任务名。
-    /// Debug 构建的数据目录是 XAssistant_Dev，自启也走这个名字，开发版与正式版互不覆盖。
+    /// Debug 构建的数据目录是 PressViewer_Dev，自启也走这个名字，开发版与正式版互不覆盖。
     /// </summary>
 #if DEBUG
-    private const string StartupAppName = "XAssistant_Dev";
+    private const string StartupAppName = "PressViewer_Dev";
 #else
-    private const string StartupAppName = "XAssistant";
+    private const string StartupAppName = "PressViewer";
 #endif
 
     public static IServiceProvider Services { get; private set; } = null!;
@@ -109,7 +109,7 @@ public partial class App : System.Windows.Application
 
         // 准备日志目录
         string logDir = AppDataPathHelper.GetAppDataFolder();
-        string logPath = System.IO.Path.Combine(logDir, "logs", "xassistant-.log");
+        string logPath = System.IO.Path.Combine(logDir, "logs", "pressviewer-.log");
 
         var services = new ServiceCollection();
 
@@ -127,13 +127,18 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IStartupService>(sp => sp.GetRequiredService<StartupService>());
         services.AddSingleton<IKeyboardHookService, KeyboardHookService>();
         services.AddSingleton<IKeyDatabaseService, KeyDatabaseService>();
+        services.AddSingleton<IGamepadHookService, GamepadHookService>();
+        services.AddSingleton<IGamepadDatabaseService, GamepadDatabaseService>();
         services.AddSingleton<ClickCounterViewModel>();
         services.AddSingleton<KeyCounterViewModel>();
+        services.AddSingleton<GamepadCounterViewModel>();
+        services.AddSingleton<HeatmapViewModel>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<UsageViewModel>();
         services.AddSingleton<AppUsageViewModel>();
         services.AddSingleton<AboutViewModel>();
         services.AddSingleton<LogViewerViewModel>();
+        services.AddSingleton<SettingsViewModel>();
 
         services.AddSingleton<ProcessUsageTracker>();
 
@@ -171,10 +176,10 @@ public partial class App : System.Windows.Application
 
         // 获取系统日志记录器
         _appLogger = provider.GetRequiredService<ILogger<App>>();
-        _appLogger.LogInformation("═══════ XAssistant 启动成功 ═══════");
+        _appLogger.LogInformation("═══════ PressViewer 启动成功 ═══════");
         _appLogger.LogInformation(
             "版本 {Version}，数据目录 {Dir}；登录后等待用户配置 {WaitMs} ms",
-            AppVersion.Display,
+            AppVersion.SemVer,
             AppDataPathHelper.GetAppDataFolder(),
             appDataWaitMs
         );
@@ -195,13 +200,20 @@ public partial class App : System.Windows.Application
         // 采集不能依赖用户是否访问过统计页：这两个 VM 的构造就是钩子的启动点。
         // 显式解析一次，保证即使主窗没显示 / 从未点开统计页，采集也已经装上。
         var config = provider.GetRequiredService<IConfigurationService>();
+
+        // 外观与数字格式要在任何窗口出现之前生效，避免启动瞬间闪一下默认配色
+        ThemeService.Apply(config.GetTheme(), config.GetDarkMode());
+        NumberFormatService.Set(config.GetShowThousandsSeparator());
+
         _appLogger.LogInformation(
-            "采集配置：键盘自动启动={Keyboard}，鼠标自动启动={Mouse}",
+            "采集配置：键盘自动启动={Keyboard}，鼠标自动启动={Mouse}，手柄自动启动={Gamepad}",
             config.GetKeyRecordingAutoStart(),
-            config.GetRecordingAutoStart()
+            config.GetRecordingAutoStart(),
+            config.GetGamepadRecordingAutoStart()
         );
         provider.GetRequiredService<KeyCounterViewModel>();
         provider.GetRequiredService<ClickCounterViewModel>();
+        provider.GetRequiredService<GamepadCounterViewModel>();
 
         // 后续主窗口
         var mainVM = provider.GetRequiredService<MainWindowViewModel>();
@@ -286,7 +298,7 @@ public partial class App : System.Windows.Application
             // 两个实例会算出不同的锁名，单实例保护就失效了。
             _singleInstance = new Mutex(
                 initiallyOwned: true,
-                $"Local\\XAssistant.SingleInstance.{StartupAppName}",
+                $"Local\\PressViewer.SingleInstance.{StartupAppName}",
                 out bool createdNew
             );
             if (createdNew)
@@ -307,10 +319,10 @@ public partial class App : System.Windows.Application
         if (!silent)
         {
             System.Windows.MessageBox.Show(
-                $"XAssistant 已经在运行。\n\n数据目录：{dataDir}\n\n"
+                $"PressViewer 已经在运行。\n\n数据目录：{dataDir}\n\n"
                     + "键盘和鼠标是全局钩子，多个实例会把同一次按键重复记进同一个库，所以这次启动已取消。\n"
                     + "要换成新版本：先把托盘里那个退掉（右键 → 退出），再启动这一次。",
-                "XAssistant 已在运行",
+                "PressViewer 已在运行",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
             );
@@ -323,7 +335,7 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            string file = Path.Combine(Path.GetTempPath(), "XAssistant-startup-error.log");
+            string file = Path.Combine(Path.GetTempPath(), "PressViewer-startup-error.log");
             File.AppendAllText(
                 file,
                 $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message}{Environment.NewLine}"
@@ -342,7 +354,7 @@ public partial class App : System.Windows.Application
         {
             string dir = Path.Combine(AppDataPathHelper.GetAppDataFolder(), "logs");
             Directory.CreateDirectory(dir);
-            string file = Path.Combine(dir, $"xassistant-{DateTime.Now:yyyyMMdd}.log");
+            string file = Path.Combine(dir, $"pressviewer-{DateTime.Now:yyyyMMdd}.log");
             using var stream = new FileStream(
                 file,
                 FileMode.Append,
@@ -351,7 +363,7 @@ public partial class App : System.Windows.Application
             );
             using var writer = new StreamWriter(stream);
             writer.WriteLine(
-                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [WRN] XAssistant.App: {message}"
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [WRN] PressViewer.App: {message}"
             );
         }
         catch
@@ -366,7 +378,7 @@ public partial class App : System.Windows.Application
         {
             Icon = GetAppIcon(),
             Visible = true,
-            Text = "XAssistant",
+            Text = "PressViewer",
         };
 
         // 左键单击托盘图标 → 显示主窗口
@@ -405,7 +417,14 @@ public partial class App : System.Windows.Application
         window.Activate();
     }
 
-    private void ShutdownApplication()
+    /// <summary>供窗口 CloseAction=Exit 时调用：等同托盘菜单「退出」。</summary>
+    public static void RequestShutdown()
+    {
+        if (Current is App app)
+            app.ShutdownApplication();
+    }
+
+    internal void ShutdownApplication()
     {
         if (_isDataSaved)
             return;

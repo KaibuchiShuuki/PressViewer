@@ -1,6 +1,6 @@
 using System;
 
-namespace XAssistant.Services.Interfaces;
+namespace PressViewer.Services.Interfaces;
 
 /// <summary>
 /// 全局鼠标点击钩子服务。

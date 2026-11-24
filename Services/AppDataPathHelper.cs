@@ -5,29 +5,70 @@ using System.Security.Principal;
 using System.Threading;
 using Microsoft.Win32;
 
-namespace XAssistant.Services
+namespace PressViewer.Services
 {
     public static class AppDataPathHelper
     {
+        /// <summary>
+        /// 数据目录固定在程序目录下的 data（开发版 data-dev），
+        /// 不再写用户 Roaming 目录；首次启动会把旧位置（%APPDATA%）的数据搬过来。
+        /// </summary>
         public static string GetAppDataFolder()
         {
-            string folderName;
 #if DEBUG
-            folderName = "XAssistant_Dev"; // 开发版专用文件夹
+            string folderName = "data-dev";
 #else
-            folderName = "XAssistant"; // 生产版专用文件夹
+            string folderName = "data";
 #endif
-            string path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                folderName
-            );
+            string path = Path.Combine(AppContext.BaseDirectory, folderName);
             Directory.CreateDirectory(path);
+
+            // 先搬改名后的 PressViewer，再搬改名前的 XAssistant；只复制、不删除。
+            MigrateFromRoaming(path, "PressViewer");
+            MigrateFromRoaming(path, "PressViewer_Dev");
+            MigrateFromRoaming(path, "XAssistant");
+            MigrateFromRoaming(path, "XAssistant_Dev");
             return path;
         }
 
         /// <summary>
+        /// 从 %APPDATA%\&lt;folder&gt; 复制历史数据到新目录。
+        /// 目标已存在则跳过；失败只是新建空库，不会动旧目录。
+        /// </summary>
+        private static void MigrateFromRoaming(string targetPath, string folderName)
+        {
+            try
+            {
+                string sourceDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    folderName
+                );
+                if (
+                    !Directory.Exists(sourceDir)
+                    || string.Equals(
+                        Path.GetFullPath(sourceDir),
+                        Path.GetFullPath(targetPath),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                    return;
+
+                foreach (string source in Directory.EnumerateFiles(sourceDir))
+                {
+                    string dest = Path.Combine(targetPath, Path.GetFileName(source));
+                    if (!File.Exists(dest))
+                        File.Copy(source, dest, overwrite: false);
+                }
+            }
+            catch
+            {
+                // 迁移失败不影响启动：旧数据仍在原目录，程序会新建空库
+            }
+        }
+
+        /// <summary>
         /// 登录后计划任务会立即拉起进程；此时用户配置单元可能还没挂载完，
-        /// <c>%APPDATA%</c> 可能指向临时目录。等到真实的 ApplicationData 路径出现再开始建库 / 写日志，
+        /// <c>%APPDATA%</c> 可能指向临时目录。等到真实的 ApplicationData 路径出现再开始写日志，
         /// 替代原来在计划任务上写死的 8 秒延时。
         /// </summary>
         public static bool WaitForApplicationDataReady(

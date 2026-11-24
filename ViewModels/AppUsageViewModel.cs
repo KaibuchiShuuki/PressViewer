@@ -4,10 +4,10 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using XAssistant.Models;
-using XAssistant.Services;
+using PressViewer.Models;
+using PressViewer.Services;
 
-namespace XAssistant.ViewModels;
+namespace PressViewer.ViewModels;
 
 public partial class AppUsageViewModel : ViewModelBase
 {

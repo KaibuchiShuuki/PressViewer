@@ -1,0 +1,6 @@
+<UserControl
+  x:Class="PressViewer.Views.GamepadShapeView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Canvas x:Name="Root" Width="640" Height="330" />
+</UserControl>

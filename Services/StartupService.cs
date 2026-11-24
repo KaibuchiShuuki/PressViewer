@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
-using XAssistant.Services.Interfaces;
+using PressViewer.Services.Interfaces;
 
 /// <summary>
 /// 开机自启的注册点管理。
@@ -56,7 +56,7 @@ public class StartupService : IStartupService
 
     /// <summary>任务管理器 / 计划任务程序里显示不了那么长，这里给一句能看懂的。</summary>
     private const string TaskDescription =
-        "XAssistant 开机自启：登录时立即拉起（程序会等用户配置就绪后开始记录）";
+        "PressViewer 开机自启：登录时立即拉起（程序会等用户配置就绪后开始记录）";
 
     // ── Task Scheduler COM 枚举值。名字都在这儿，免得看代码时来回查文档 ──
     private const int TriggerTypeLogon = 9;
@@ -67,7 +67,7 @@ public class StartupService : IStartupService
     private const int InstancesIgnoreNew = 2; // 已经在跑就不要再起一个
     private const int HResultFileNotFound = unchecked((int)0x80070002);
 
-    /// <summary>Run 值名与计划任务名共用这一个（开发版是 XAssistant_Dev，与数据目录同名）。</summary>
+    /// <summary>Run 值名与计划任务名共用这一个（开发版是 PressViewer_Dev，与数据目录同名）。</summary>
     private readonly string _appName;
 
     private readonly string _exePath;

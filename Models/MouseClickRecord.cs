@@ -1,6 +1,6 @@
 using System;
 
-namespace XAssistant.Models;
+namespace PressViewer.Models;
 
 public class MouseClickRecord
 {

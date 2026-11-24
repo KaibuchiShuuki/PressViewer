@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.Data.Sqlite;
 using Microsoft.Win32;
 
-namespace XAssistant.Service;
+namespace PressViewer.Service;
 
 public class UsageTrackingService : BackgroundService
 {
@@ -14,9 +14,25 @@ public class UsageTrackingService : BackgroundService
     private DateTime _todayDate;
     private bool _isRunning;
     private readonly object _lock = new(); // 线程同步锁
-    private const string DbFolder = @"C:\ProgramData\XAssistant\UsageTracker";
     private const string DbFile = "pc_usage.db";
+    private const string LegacyDbPath = @"C:\ProgramData\XAssistant\UsageTracker\pc_usage.db";
+    private static readonly string DbFolder = Path.Combine(AppContext.BaseDirectory, "data");
     private static readonly string DbPath = Path.Combine(DbFolder, DbFile);
+
+    /* 数据跟着服务目录走；首次启动把 ProgramData 里的旧库复制过来。 */
+    static UsageTrackingService()
+    {
+        try
+        {
+            Directory.CreateDirectory(DbFolder);
+            if (!File.Exists(DbPath) && File.Exists(LegacyDbPath))
+                File.Copy(LegacyDbPath, DbPath);
+        }
+        catch
+        {
+            // 迁移失败不阻塞服务启动
+        }
+    }
     private static readonly TimeSpan SaveInterval = TimeSpan.FromSeconds(7); // 定时保存间隔
 
     public UsageTrackingService(ILogger<UsageTrackingService> logger)

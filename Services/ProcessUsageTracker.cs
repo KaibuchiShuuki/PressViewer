@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Timer = System.Threading.Timer;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public sealed class ProcessUsageTracker : IDisposable
 {

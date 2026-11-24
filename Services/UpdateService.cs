@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public enum UpdateStatus
 {
@@ -54,9 +54,9 @@ public readonly record struct UpdateCheckResult(
 public sealed class UpdateService
 {
     /// <summary>给用户看的更新说明页面，也是发现新版后打开的那个地址。</summary>
-    public const string ReleasePageUrl = "https://github.com/xuhk/XAssistant/releases/latest";
+    public const string ReleasePageUrl = "https://github.com/KaibuchiShuuki/PressViewer/releases/latest";
 
-    private const string OwnerRepo = "xuhk/XAssistant";
+    private const string OwnerRepo = "KaibuchiShuuki/PressViewer";
 
     private static readonly string ApiEndpoint =
         $"https://api.github.com/repos/{OwnerRepo}/releases/latest";
@@ -131,6 +131,10 @@ public sealed class UpdateService
             if (p.Tag is not { Length: > 0 } tag)
                 continue;
 
+            // 空仓库的 releases/latest 会 302 到 /releases 页面，末段不是版本号，不能当 tag 用
+            if (!IsVersionTag(tag))
+                continue;
+
             string latest = tag.TrimStart('v', 'V');
             int cmp = VersionMath.Compare(latest, current);
             if (cmp <= 0)
@@ -153,6 +157,13 @@ public sealed class UpdateService
     }
 
     private static string Describe(Probe p) => p.Tag is { Length: > 0 } ? $"OK {p.Tag}" : p.Reason;
+
+    /// <summary>tag 必须是 <c>v1.2.3</c> / <c>1.2.3</c> 这类形状。</summary>
+    private static bool IsVersionTag(string tag)
+    {
+        string s = tag.TrimStart('v', 'V');
+        return s.Length > 0 && char.IsDigit(s[0]) && s.All(c => char.IsDigit(c) || c == '.');
+    }
 
     /// <summary>
     /// 端点一：GitHub API，读 JSON 里的 <c>tag_name</c>。**不要用 <c>HttpClient</c> 的自动重定向**
@@ -268,7 +279,7 @@ public sealed class UpdateService
         var client = new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
         // 取消由 CancellationTokenSource 统一管（两个请求共用一个总超时）
         client.DefaultRequestHeaders.UserAgent.ParseAdd(
-            $"XAssistant/{AppVersion.SemVer} (+{ReleasePageUrl})"
+            $"PressViewer/{AppVersion.SemVer} (+{ReleasePageUrl})"
         );
         return client;
     }

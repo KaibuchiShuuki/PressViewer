@@ -1,10 +1,10 @@
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using XAssistant.Models;
-using XAssistant.Services.Interfaces;
+using PressViewer.Models;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.ViewModels;
+namespace PressViewer.ViewModels;
 
 public partial class ClickCounterViewModel : ViewModelBase
 {
@@ -155,6 +155,23 @@ public partial class ClickCounterViewModel : ViewModelBase
                 case "Right":
                     RightClickToday++;
                     break;
+            }
+
+            // 鼠标页「查看历史」正停在今天时，底部三个数字也要跟着实时走
+            if (SelectedDate.Date == DateTime.Today)
+            {
+                switch (button)
+                {
+                    case "Left":
+                        SelectedDateLeftCount++;
+                        break;
+                    case "Middle":
+                        SelectedDateMiddleCount++;
+                        break;
+                    case "Right":
+                        SelectedDateRightCount++;
+                        break;
+                }
             }
         }
 

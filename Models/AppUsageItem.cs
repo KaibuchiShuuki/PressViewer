@@ -1,4 +1,4 @@
-namespace XAssistant.Models;
+namespace PressViewer.Models;
 
 public class AppUsageItem
 {

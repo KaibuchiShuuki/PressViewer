@@ -37,3 +37,11 @@ release/
 
 ## 本机私有模块（指向仓库外私有仓库的目录联结，不对外发布）
 Local/
+data/
+service/
+*.db
+*.db-wal
+*.db-shm
+*.bak
+bin/
+obj/

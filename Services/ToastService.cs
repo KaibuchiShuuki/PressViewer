@@ -1,9 +1,9 @@
 using System;
 using System.Windows;
 using Microsoft.Extensions.Logging;
-using XAssistant.Views;
+using PressViewer.Views;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 // 轻量 toast 服务：在 UI 线程弹出一个短暂浮现的确认提示（不抢占焦点）
 public sealed class ToastService

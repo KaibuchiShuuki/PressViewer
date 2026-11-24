@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace XAssistant.Models;
+namespace PressViewer.Models;
 
 /// <summary>「关于」页里的一段更新日志：一个版本标题 + 若干分类。</summary>
 public sealed class ChangelogSection

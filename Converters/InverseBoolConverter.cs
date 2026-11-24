@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace XAssistant.Converters
+namespace PressViewer.Converters
 {
     public class InverseBoolConverter : IValueConverter
     {

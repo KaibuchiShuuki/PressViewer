@@ -1,4 +1,4 @@
-namespace XAssistant.Views
+namespace PressViewer.Views
 {
     public partial class ClickCounterView
     {

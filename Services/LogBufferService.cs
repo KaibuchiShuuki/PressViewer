@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Windows.Data;
-using XAssistant.Models;
-using XAssistant.Services.Interfaces;
+using PressViewer.Models;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public class LogBufferService : ILogBufferService
 {

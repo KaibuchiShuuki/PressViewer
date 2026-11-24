@@ -1,9 +1,9 @@
 using Serilog;
 using Serilog.Events;
-using XAssistant.Service;
+using PressViewer.Service;
 
 // 定义日志目录
-var logDir = @"C:\ProgramData\XAssistant\UsageTracker\logs";
+var logDir = Path.Combine(AppContext.BaseDirectory, "data", "logs");
 Directory.CreateDirectory(logDir);
 
 Log.Logger = new LoggerConfiguration()

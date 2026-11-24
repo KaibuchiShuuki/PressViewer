@@ -144,7 +144,7 @@
 
 **目标**：让"我装的是哪个版本"能被人和程序同时回答。**这是检查更新的前置，也越早做越好**（之后每个版本都要用）。
 
-**动哪些文件**：`XAssistant.csproj`、`App.xaml.cs`（或一个 `Services/AppVersion.cs`）
+**动哪些文件**：`PressViewer.csproj`、`App.xaml.cs`（或一个 `Services/AppVersion.cs`）
 
 **现状（实测）**
 
@@ -174,7 +174,7 @@
 
 ### S1.1 加依赖 + 前端资源入库
 
-**动哪些文件**：`XAssistant.csproj`、把 `temp/ui-design/v4/` 移进仓库
+**动哪些文件**：`PressViewer.csproj`、把 `temp/ui-design/v4/` 移进仓库
 
 **做法**
 - 加 `Microsoft.Web.WebView2`（`1.0.*`）→ 包体积 **+1.0 MB**（实测：Core 682 KB + Loader 160 KB + Wpf 85 KB）。
@@ -299,8 +299,8 @@
 
 | 端点 | 结果 |
 |---|---|
-| `https://github.com/xuhk/XAssistant/releases/latest` | **HTTP 200，2.2 秒**，302 到 `/releases/tag/v1.0.0` → 从 Location 末段取出 tag |
-| `https://api.github.com/repos/xuhk/XAssistant/releases/latest` | **HTTP 403 被拦**（间歇性；同一时刻网页端可达） |
+| `https://github.com/xuhk/PressViewer/releases/latest` | **HTTP 200，2.2 秒**，302 到 `/releases/tag/v1.0.0` → 从 Location 末段取出 tag |
+| `https://api.github.com/repos/xuhk/PressViewer/releases/latest` | **HTTP 403 被拦**（间歇性；同一时刻网页端可达） |
 
 所以：
 
@@ -311,7 +311,7 @@
 - 超时 5–8 秒；**失败一律静默**（只记日志），UI 显示"检查失败，请稍后再试"，绝不弹异常。
 - 只在用户点"检查更新"时请求，**不做启动自动检查** —— 这样 README 里"不联网"的承诺基本不变。
 - 加 5 分钟防抖（记住 `lastCheckedAt`），避免用户连点发出多个请求。
-- 不做 release 说明解析（只拿 tag）；要看更新说明就直接打开 `https://github.com/xuhk/XAssistant/releases/latest` 给用户。
+- 不做 release 说明解析（只拿 tag）；要看更新说明就直接打开 `https://github.com/xuhk/PressViewer/releases/latest` 给用户。
 
 **不做自动下载安装。** 理由：Windows 上替换正在运行的 exe 需要额外的 helper 进程；还要处理 76 MB 包的进度、断点、哈希校验、失败回滚；而且让一个开源 app"自己下载并运行二进制"会引来用户信任顾虑与杀软告警。**这部分工作量比前面所有加起来都大，收益却只是省一次手动下载。**
 
@@ -342,7 +342,7 @@
 | 首帧 | 冷 4.6 s / 热 3.1 s |
 | 空闲 CPU | 整机 0.12% |
 
-**注意**：上表来自空 WPF 壳的探针。真实 `XAssistant.exe` 常驻是私有 122 MB / 工作集 78.8 MB，叠加后预期私有 ≈192 MB、工作集 90–100 MB —— **这个数字是推算的，本步要用真实 app 实测一次**。
+**注意**：上表来自空 WPF 壳的探针。真实 `PressViewer.exe` 常驻是私有 122 MB / 工作集 78.8 MB，叠加后预期私有 ≈192 MB、工作集 90–100 MB —— **这个数字是推算的，本步要用真实 app 实测一次**。
 
 ### S3.3 打包决策
 

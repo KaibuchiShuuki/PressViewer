@@ -1,11 +1,11 @@
-# XAssistant Context
+# PressViewer Context
 
 Windows 活动统计应用（WPF / .NET 10，常驻托盘）的领域词汇。下面几个词在代码里容易被叫混，这里定死。
 
 ## Language
 
 **使用时长（Usage Duration）**:
-电脑整体的开机 / 活跃时长。**不由本仓库采集**，来自独立的 "UsageTracker" 服务，落 `C:\ProgramData\XAssistant\UsageTracker\pc_usage.db`；本仓库只通过命名管道读取展示，取不到时回退数据库、再回退"无法获取"。
+电脑整体的开机 / 活跃时长。**不由本仓库采集**，来自独立的 "UsageTracker" 服务，落 `C:\ProgramData\PressViewer\UsageTracker\pc_usage.db`；本仓库只通过命名管道读取展示，取不到时回退数据库、再回退"无法获取"。
 _Avoid_: 电脑使用、开机时间
 
 **应用使用时长（App Usage）**:

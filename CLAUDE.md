@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-XAssistant 是一款 Windows 桌面活动监控应用（WPF、C#、.NET 10），负责记录：
+PressViewer 是一款 Windows 桌面活动监控应用（WPF、C#、.NET 10），负责记录：
 
 - **鼠标点击**（左/中/右键），通过低级 Win32 钩子实现
 - **键盘按键**，通过低级 Win32 钩子实现
@@ -24,21 +24,21 @@ UI 采用基于 CommunityToolkit.Mvvm 的 WPF MVVM 架构。项目没有自动�
 
 ## 数据存储
 
-所有应用数据存放在 `%APPDATA%\XAssistant`（Release）或 `%APPDATA%\XAssistant_Dev`（Debug）。该区分由 `AppDataPathHelper` 中的 `#if DEBUG` 控制，**同时**影响数据文件夹和开机自启注册表键（开发版使用 `XAssistant_Dev`），因此 Debug 构建永远不会触碰生产数据。在该文件夹内：
+所有应用数据存放在 `%APPDATA%\PressViewer`（Release）或 `%APPDATA%\PressViewer_Dev`（Debug）。该区分由 `AppDataPathHelper` 中的 `#if DEBUG` 控制，**同时**影响数据文件夹和开机自启注册表键（开发版使用 `PressViewer_Dev`），因此 Debug 构建永远不会触碰生产数据。在该文件夹内：
 
 - `click_data.db` —— 表 `ClickRecords(Id, Button, ClickTime)`
 - `key_data.db` —— 表 `KeyPressRecords(Id, Key, PressTime)`
 - `app_usage.db` —— 表 `ProcessSession(Id, ProcessName, StartTime, EndTime, WindowTitle, Date, AccumulatedSeconds, LastUpdateTime)`；WAL 模式；由 `ProcessUsageTracker` 写入
 - `appsettings.json` —— `AppSettings`（录制自动启动开关、窗口大小、日志面板状态），由 `ConfigurationService` 负责
-- `logs/xassistant-<日期>.log` —— Serilog 滚动文件日志（保留 31 天）
+- `logs/pressviewer-<日期>.log` —— Serilog 滚动文件日志（保留 31 天）
 
 时间戳以字符串形式存储：点击/键盘数据库使用 ISO 8601（`"o"`）格式，`ProcessSession` 使用 `yyyy-MM-dd HH:mm:ss.fff`（另有独立的 `Date` 列，格式为 `yyyy-MM-dd`，用于按天分桶）。
 
 ## 外部依赖（重要）
 
-“电脑使用统计”页面（`UsageViewModel`）**不读取**本仓库的数据。它通过命名管道 `UsageTrackerPipe` 和位于 `C:\ProgramData\XAssistant\UsageTracker\pc_usage.db` 的 SQLite 数据库来消费独立的 “UsageTracker” 后台服务。如果该服务未运行，它会回退到数据库，最后显示“无法获取”。管道服务器和 `pc_usage.db` 的写入方都不在本仓库中。
+“电脑使用统计”页面（`UsageViewModel`）**不读取**本仓库的数据。它通过命名管道 `UsageTrackerPipe` 和位于 `C:\ProgramData\PressViewer\UsageTracker\pc_usage.db` 的 SQLite 数据库来消费独立的 “UsageTracker” 后台服务。如果该服务未运行，它会回退到数据库，最后显示“无法获取”。管道服务器和 `pc_usage.db` 的写入方都不在本仓库中。
 
-服务端收尾约定（`XAssistant.Service/Services/UsageTrackingService.cs`）：断电 / 强杀走不到 `Dispose()`，所以每次落盘（7 秒定时 + 每次客户端轮询）都会把「最后确认还活着」的时刻写进 `ServiceHeartbeat`；下次启动时若最后一条 `SessionEvents` 停在 `ServiceStarted` / `Resume`，就在心跳时刻补一条 `ServiceStopped`。混合关机走 `Suspend` / `Resume`，本身是闭合区间，不需要补。服务应安装在固定本地盘（`C:`），不要放在会掉盘或离线的副盘上。
+服务端收尾约定（`PressViewer.Service/Services/UsageTrackingService.cs`）：断电 / 强杀走不到 `Dispose()`，所以每次落盘（7 秒定时 + 每次客户端轮询）都会把「最后确认还活着」的时刻写进 `ServiceHeartbeat`；下次启动时若最后一条 `SessionEvents` 停在 `ServiceStarted` / `Resume`，就在心跳时刻补一条 `ServiceStopped`。混合关机走 `Suspend` / `Resume`，本身是闭合区间，不需要补。服务应安装在固定本地盘（`C:`），不要放在会掉盘或离线的副盘上。
 
 ## 架构
 
@@ -50,9 +50,9 @@ UI 采用基于 CommunityToolkit.Mvvm 的 WPF MVVM 架构。项目没有自动�
 
 ### 开机自启与版本检查
 
-- **开机自启挂两条路**（`Services/StartupService.cs`）：登录触发的计划任务负责**提前**（登录时立即拉起，不再固定等 8 秒），注册表 `HKCU\...\Run` 负责兜底（慢 30~55 秒）。程序启动后由 `AppDataPathHelper.WaitForApplicationDataReady` 等用户配置目录真正就绪再建日志 / 读库，替代原来的 8 秒延时。两条路同时生效时靠单实例锁 `App.TryAcquireSingleInstance` 去重（锁名只用应用名，不能用尚未就绪的数据目录），后起的那个静默退出；`--silent` 只驻留托盘。`--register-startup` / `--unregister-startup` 是给 `tools/xassistant-autostart.ps1` 用的维护入口，改注册点不用让用户先退应用。
+- **开机自启挂两条路**（`Services/StartupService.cs`）：登录触发的计划任务负责**提前**（登录时立即拉起，不再固定等 8 秒），注册表 `HKCU\...\Run` 负责兜底（慢 30~55 秒）。程序启动后由 `AppDataPathHelper.WaitForApplicationDataReady` 等用户配置目录真正就绪再建日志 / 读库，替代原来的 8 秒延时。两条路同时生效时靠单实例锁 `App.TryAcquireSingleInstance` 去重（锁名只用应用名，不能用尚未就绪的数据目录），后起的那个静默退出；`--silent` 只驻留托盘。`--register-startup` / `--unregister-startup` 是给 `tools/pressviewer-autostart.ps1` 用的维护入口，改注册点不用让用户先退应用。
 - **检查更新**（`Services/UpdateService.cs`）只在用户点按钮时联网：`api.github.com/.../releases/latest` 与 `github.com/.../releases/latest` 两个端点**并发**探测，任一拿到 tag 即用（两个端点都会间歇性不可用，串行会白等），5 分钟防抖；只发现、不下载。版本号来自 `Services/AppVersion.cs` 解析的 `ProductVersion`（`1.0.1+sha`）。
-- **版本入口收在「关于」页**（`ViewModels/AboutViewModel.cs` + `Views/AboutView.xaml`），侧栏只留一个「关于」导航——更新不频繁也不强制，不占用常驻界面。更新日志是仓库根目录的 `CHANGELOG.md`，以嵌入资源 `XAssistant.CHANGELOG.md` 编进程序集；页面只解析 `## 版本 — 日期`、`### 分类`、`- 变更` 三种行（分类名由 `CHANGELOG.md` 的 `###` 决定，当前用 新增 / 修复 / 优化；只支持一层列表，缩进子项会被忽略），不引 Markdown 库。改日志时只改 `CHANGELOG.md` 一处。
+- **版本入口收在「关于」页**（`ViewModels/AboutViewModel.cs` + `Views/AboutView.xaml`），侧栏只留一个「关于」导航——更新不频繁也不强制，不占用常驻界面。更新日志是仓库根目录的 `CHANGELOG.md`，以嵌入资源 `PressViewer.CHANGELOG.md` 编进程序集；页面只解析 `## 版本 — 日期`、`### 分类`、`- 变更` 三种行（分类名由 `CHANGELOG.md` 的 `###` 决定，当前用 新增 / 修复 / 优化；只支持一层列表，缩进子项会被忽略），不引 Markdown 库。改日志时只改 `CHANGELOG.md` 一处。
 
 ### 四个模块
 每个模块 = 钩子服务 + SQLite 仓库 + ViewModel + View：

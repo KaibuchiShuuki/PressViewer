@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
-namespace XAssistant.Views;
+namespace PressViewer.Views;
 
 // 轻量 toast：右下角短暂浮现确认信息，自动消失、点击可提前关闭；不抢占焦点（ShowActivated=false）
 public partial class ToastWindow : Window

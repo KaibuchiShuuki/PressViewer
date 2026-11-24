@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace XAssistant.Converters
+namespace PressViewer.Converters
 {
     public class InvertableBooleanToVisibilityConverter : IValueConverter
     {

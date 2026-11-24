@@ -1,6 +1,6 @@
-﻿<#
+<#
 .SYNOPSIS
-    构建并打包两种 XAssistant Release 包（带运行时 / 不带运行时）。
+    构建并打包两种 PressViewer Release 包（带运行时 / 不带运行时）。
 .DESCRIPTION
     两种包内容一致（主程序 + 后台服务 + 三个安装脚本 + README），
     唯一区别是带运行时的包自带 .NET 运行时。
@@ -18,15 +18,15 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
 if ([string]::IsNullOrWhiteSpace($Version)) {
-    $match = Select-String -Path (Join-Path $repoRoot "XAssistant.csproj") -Pattern "<Version>(.*?)</Version>" | Select-Object -First 1
+    $match = Select-String -Path (Join-Path $repoRoot "PressViewer.csproj") -Pattern "<Version>(.*?)</Version>" | Select-Object -First 1
     if (-not $match) {
         throw "读不到版本号。"
     }
     $Version = $match.Matches[0].Groups[1].Value.Trim()
 }
 
-$mainProject = Join-Path $repoRoot "XAssistant.csproj"
-$serviceProject = Join-Path $repoRoot "XAssistant.Service\XAssistant.Service.csproj"
+$mainProject = Join-Path $repoRoot "PressViewer.csproj"
+$serviceProject = Join-Path $repoRoot "PressViewer.Service\PressViewer.Service.csproj"
 $publishRoot = Join-Path $repoRoot "temp\package-publish"
 $outputDirFull = Join-Path $repoRoot $OutputDir
 if (-not (Test-Path $outputDirFull)) {
@@ -63,9 +63,9 @@ function Assert-CleanPackage {
         [string]$ServicePublish,
         [bool]$ExpectRuntime
     )
-    $mainExe = Join-Path $MainPublish "XAssistant.exe"
-    $mainAssembly = Join-Path $MainPublish "XAssistant.dll"
-    $serviceExe = Join-Path $ServicePublish "XAssistant.Service.exe"
+    $mainExe = Join-Path $MainPublish "PressViewer.exe"
+    $mainAssembly = Join-Path $MainPublish "PressViewer.dll"
+    $serviceExe = Join-Path $ServicePublish "PressViewer.Service.exe"
     if (-not (Test-Path $mainExe)) { throw "主程序产物不完整：$mainExe" }
     if (-not (Test-Path $serviceExe)) { throw "服务产物不完整：$serviceExe" }
     if (Test-Path (Join-Path $MainPublish "Npgsql.dll")) {
@@ -107,10 +107,10 @@ function New-ReleasePackage {
     New-Item -ItemType Directory -Force -Path $stageApp | Out-Null
     Copy-Item -Path (Join-Path $MainPublish "*") -Destination $stageApp -Recurse -Force
 
-    $stageService = Join-Path $stage "XAssistant.Service"
+    $stageService = Join-Path $stage "PressViewer.Service"
     New-Item -ItemType Directory -Force -Path $stageService | Out-Null
     Copy-Item -Path (Join-Path $ServicePublish "*") -Destination $stageService -Recurse -Force
-    Copy-Item -Path (Join-Path $repoRoot "XAssistant.Service\install-service.ps1") -Destination $stageService -Force
+    Copy-Item -Path (Join-Path $repoRoot "PressViewer.Service\install-service.ps1") -Destination $stageService -Force
 
     Copy-Item -Path (Join-Path $repoRoot "install.ps1") -Destination (Join-Path $stageApp "install-core.ps1") -Force
     foreach ($scriptName in "install.cmd", "install-app.cmd", "install-service.cmd") {
@@ -119,10 +119,10 @@ function New-ReleasePackage {
     Copy-Item -Path (Join-Path $repoRoot "LICENSE") -Destination $stage -Force
 
     $packageReadme = @"
-XAssistant 安装 / 升级说明
+PressViewer 安装 / 升级说明
 
 先双击 install.cmd（安装主程序 + 后台服务）。
-不要直接双击 app\XAssistant.exe：那样不会安装后台服务，也不会走升级流程。
+不要直接双击 app\PressViewer.exe：那样不会安装后台服务，也不会走升级流程。
 
 运行环境
 - Windows 10 / 11 64 位
@@ -130,15 +130,15 @@ $RuntimeLine
 
 包内布局
 - app\                  主程序本体和安装实现，不用打开
-- XAssistant.Service\   后台服务，不用打开
+- PressViewer.Service\   后台服务，不用打开
 - install.cmd           安装/升级主程序和后台服务（推荐）
 - install-app.cmd       只安装/升级主程序，不动后台服务
 - install-service.cmd   只安装/更新后台服务，不动主程序
 - README.txt            本说明
 
-首次安装会让你选择安装目录（直接回车使用 C:\XAssistant）；升级会自动找到原目录。
+首次安装会让你选择安装目录（直接回车使用 C:\PressViewer）；升级会自动找到原目录。
 不需要先手动退出程序，脚本会自己结束进程并备份旧版本（最多保留 3 份）。
-数据保存在 %APPDATA%\XAssistant 和 C:\ProgramData\XAssistant\UsageTracker，升级不会删除。
+数据保存在 %APPDATA%\PressViewer 和 C:\ProgramData\XAssistant\UsageTracker，升级不会删除。
 如果 Windows 提示"未知发布者"，是未签名程序，选择"仍要运行"即可。
 "@
 
@@ -189,8 +189,8 @@ Write-Host "发布带运行时的版本..." -ForegroundColor Cyan
 Invoke-Publish -Project $mainProject -Output $selfMain -SelfContained $true -ExcludeLocal $true
 Invoke-Publish -Project $serviceProject -Output $selfService -SelfContained $true -ExcludeLocal $false
 
-New-ReleasePackage -Variant "with-runtime" -MainPublish $selfMain -ServicePublish $selfService -ZipName "XAssistant-win-x64-v$Version.zip" -RuntimeLine "- 本包已自带 .NET 运行时，无需另外安装" -ExpectRuntime $true
-New-ReleasePackage -Variant "no-runtime" -MainPublish $frameworkMain -ServicePublish $frameworkService -ZipName "XAssistant-win-x64-noruntime-v$Version.zip" -RuntimeLine "- 需要 .NET 10 Desktop Runtime（本包不包含运行时）`n  下载：https://dotnet.microsoft.com/download/dotnet/10.0" -ExpectRuntime $false
+New-ReleasePackage -Variant "with-runtime" -MainPublish $selfMain -ServicePublish $selfService -ZipName "PressViewer-win-x64-v$Version.zip" -RuntimeLine "- 本包已自带 .NET 运行时，无需另外安装" -ExpectRuntime $true
+New-ReleasePackage -Variant "no-runtime" -MainPublish $frameworkMain -ServicePublish $frameworkService -ZipName "PressViewer-win-x64-noruntime-v$Version.zip" -RuntimeLine "- 需要 .NET 10 Desktop Runtime（本包不包含运行时）`n  下载：https://dotnet.microsoft.com/download/dotnet/10.0" -ExpectRuntime $false
 
 Remove-Item $publishRoot -Recurse -Force
 Write-Host "版本 $Version 的两个包都已生成。" -ForegroundColor Green

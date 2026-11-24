@@ -1,6 +1,6 @@
 using System.Windows.Controls;
 
-namespace XAssistant.Views;
+namespace PressViewer.Views;
 
 public partial class AppUsageView
 {

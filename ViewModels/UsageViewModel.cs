@@ -1,17 +1,37 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using XAssistant.Models;
+using PressViewer.Models;
 
-namespace XAssistant.ViewModels;
+namespace PressViewer.ViewModels;
 
 public partial class UsageViewModel : ViewModelBase
 {
-    private const string DbPath = @"C:\ProgramData\XAssistant\UsageTracker\pc_usage.db";
+    // 服务数据跟服务目录走（app 的同级 service\data）；找不到时回退旧位置。
+    private static readonly string DbPath = ResolveDbPath();
+    private const string LegacyDbPath = @"C:\ProgramData\XAssistant\UsageTracker\pc_usage.db";
+
+    private static string ResolveDbPath()
+    {
+        try
+        {
+            string sibling = Path.GetFullPath(
+                Path.Combine(AppContext.BaseDirectory, "..", "service", "data", "pc_usage.db")
+            );
+            if (File.Exists(sibling))
+                return sibling;
+        }
+        catch
+        {
+            // 忽略路径异常，走旧位置
+        }
+        return LegacyDbPath;
+    }
     private const string PipeName = "UsageTrackerPipe";
     private readonly DispatcherTimer _refreshTimer;
     private readonly ILogger<UsageViewModel> _logger;

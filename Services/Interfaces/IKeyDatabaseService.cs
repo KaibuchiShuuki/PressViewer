@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using XAssistant.Models;
+using PressViewer.Models;
 
-namespace XAssistant.Services.Interfaces;
+namespace PressViewer.Services.Interfaces;
 
 public interface IKeyDatabaseService
 {

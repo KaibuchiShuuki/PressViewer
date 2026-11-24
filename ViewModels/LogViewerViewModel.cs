@@ -2,10 +2,10 @@ using System.Collections.ObjectModel;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using XAssistant.Models;
-using XAssistant.Services.Interfaces;
+using PressViewer.Models;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.ViewModels;
+namespace PressViewer.ViewModels;
 
 public partial class LogViewerViewModel : ViewModelBase
 {

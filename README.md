@@ -1,6 +1,10 @@
-# XAssistant
+# PressViewer
 
-**XAssistant** 是一款 Windows 桌面活动统计工具（WPF / C# / .NET 10），常驻系统托盘，记录键盘、鼠标点击数及使用时长。**所有数据仅保存在本机，不联网上传。**
+> **本项目基于 [xuhk/XAssistant](https://github.com/xuhk/XAssistant) 修改**，原作者 xuhk，遵循 MIT License。
+> 1.0.0 / 1.0.1 由原作者完成；1.1.0 起由 Shuuki 维护：更名 PressViewer、手柄统计、主题与设置、真实鼠标/手柄图形等。
+> 原版权声明与许可文本保留在 [LICENSE](LICENSE)。
+
+**PressViewer** 是一款 Windows 桌面活动统计工具（WPF / C# / .NET 10），常驻系统托盘，记录键盘、鼠标点击数及使用时长。**所有数据仅保存在本机，不联网上传。**
 
 ## 说明
 
@@ -30,9 +34,9 @@
 
 ## 安装
 
-1. 从 Releases 下载一种包：`XAssistant-win-x64-*.zip`（自带运行时，体积大，开箱即用）或 `XAssistant-win-x64-noruntime-*.zip`（不带运行时，体积小，需要 .NET 10 Desktop Runtime）。
-2. 解压到任意文件夹（程序本体在 `app\`，后台服务在 `XAssistant.Service\`，都不用打开；不要直接双击 `app\XAssistant.exe`）。
-3. 双击 `install.cmd`，按提示允许管理员权限。首次安装会让你选择安装目录（直接回车使用 `C:\XAssistant`）；安装脚本会一并安装后台服务并启动程序。只想装主程序或只更新服务时，分别双击 `install-app.cmd` / `install-service.cmd`。
+1. 从 Releases 下载一种包：`PressViewer-win-x64-*.zip`（自带运行时，体积大，开箱即用）或 `PressViewer-win-x64-noruntime-*.zip`（不带运行时，体积小，需要 .NET 10 Desktop Runtime）。
+2. 解压到任意文件夹（程序本体在 `app\`，后台服务在 `PressViewer.Service\`，都不用打开；不要直接双击 `app\PressViewer.exe`）。
+3. 双击 `install.cmd`，按提示允许管理员权限。首次安装会让你选择安装目录（直接回车使用 `C:\PressViewer`）；安装脚本会一并安装后台服务并启动程序。只想装主程序或只更新服务时，分别双击 `install-app.cmd` / `install-service.cmd`。
 4. 默认**不会**开机自启动。需要常驻统计的话，在应用界面左侧勾选"**开机自动启动**"：登录时由计划任务立即拉起（等用户配置目录就绪后再读写数据），注册表 Run 键作为兜底。
 
 > 安装脚本会一并安装后台服务（负责「电脑使用时长」）。安装目录可以自己选，以后升级会自动识别。请装在固定的本地磁盘，放在移动盘或可能离线的副盘上时，开机时后台服务可能起不来。
@@ -43,16 +47,16 @@
 
 ### 从 Release 包升级
 
-1. 下载新版对应的一种包（带运行时 / 不带运行时都行，脚本和目录结构一样），解压到任意文件夹；同样不要直接点 `app\XAssistant.exe`。
+1. 下载新版对应的一种包（带运行时 / 不带运行时都行，脚本和目录结构一样），解压到任意文件夹；同样不要直接点 `app\PressViewer.exe`。
 2. 双击 `install.cmd`（只升级主程序或服务时用 `install-app.cmd` / `install-service.cmd`）。脚本会自动找到现有安装目录，结束正在运行的程序和后台服务、备份旧版本、替换文件、更新服务并启动。旧版本会备份到安装目录旁边，最多保留最近 3 份。
 
-数据保存在 `%APPDATA%\XAssistant` 和 `C:\ProgramData\XAssistant\UsageTracker`，不随安装目录覆盖。程序不会自动下载或安装更新；可以在「关于」页点「检查更新」确认有没有新版本，再打开下载页。
+数据保存在 `%APPDATA%\PressViewer` 和 `C:\ProgramData\PressViewer\UsageTracker`，不随安装目录覆盖。程序不会自动下载或安装更新；可以在「关于」页点「检查更新」确认有没有新版本，再打开下载页。
 
 ### 从源码更新
 
 管理员 PowerShell 运行 `.\install.ps1`：默认构建并部署主程序（自动识别安装目录，`-InstallDir` 可指定）。
 
-后台服务有更新时，再在 `XAssistant.Service` 目录运行 `.\publish-and-install.ps1`。
+后台服务有更新时，再在 `PressViewer.Service` 目录运行 `.\publish-and-install.ps1`。
 
 ## 功能
 
@@ -60,7 +64,7 @@
 | --------------- | -------------------------------------------------------------- |
 | ⌨️ 键盘按键统计 | 按键计数，区分左右修饰键（Ctrl / Shift / Alt / Win）           |
 | 🖱️ 鼠标点击统计 | 记录左 / 中 / 右键点击次数                                     |
-| 💻 电脑使用时长 | 记录电脑每天的开机 / 使用时长，依赖后台服务 XAssistant.Service |
+| 💻 电脑使用时长 | 记录电脑每天的开机 / 使用时长，依赖后台服务 PressViewer.Service |
 | 📊 应用使用时长 | WMI 追踪各应用使用时长——**不完善，统计可能有偏差**             |
 | ℹ️ 关于         | 查看当前版本、手动检查更新和更新日志                           |
 
@@ -74,9 +78,9 @@
 
 ## 数据存储
 
-- 主程序数据：`%APPDATA%\XAssistant`（统计数据库与配置 `appsettings.json`）
-- 后台服务数据：`C:\ProgramData\XAssistant\UsageTracker`（电脑使用时长数据库）
-- 日志：`%APPDATA%\XAssistant\logs\`（滚动保留 31 天）
+- 主程序数据：`%APPDATA%\PressViewer`（统计数据库与配置 `appsettings.json`）
+- 后台服务数据：`C:\ProgramData\PressViewer\UsageTracker`（电脑使用时长数据库）
+- 日志：`%APPDATA%\PressViewer\logs\`（滚动保留 31 天）
 
 均为本地文件。只在你手动点「检查更新」时向 GitHub 查询一次最新版本号（不发送任何本机数据，不做启动自动检查）。
 
@@ -84,7 +88,7 @@
 
 ```powershell
 # 构建整个解决方案（主程序 + 后台服务）
-dotnet build XAssistant.sln -c Release
+dotnet build PressViewer.sln -c Release
 
 # 打两种 Release 包（带运行时 / 不带运行时；自动排除 Local 私有模块）
 # 打包脚本会分别用 --self-contained true/false 发布主程序和服务

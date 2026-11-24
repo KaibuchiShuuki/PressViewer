@@ -1,4 +1,4 @@
-namespace XAssistant.Services.Interfaces;
+namespace PressViewer.Services.Interfaces;
 
 /// <summary>
 /// Windows 开机自启动。

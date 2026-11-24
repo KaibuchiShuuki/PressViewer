@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 /// <summary>
 /// 运行时版本号。值取自 exe 的 ProductVersion，形如 <c>1.1.0+f6c80c7f29dc9339ea095da3b77a5c56dedba8b4</c>

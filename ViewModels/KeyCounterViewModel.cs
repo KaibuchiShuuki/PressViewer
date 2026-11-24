@@ -2,10 +2,10 @@ using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using XAssistant.Services.Interfaces;
+using PressViewer.Services.Interfaces;
 using WpfApplication = System.Windows.Application;
 
-namespace XAssistant.ViewModels;
+namespace PressViewer.ViewModels;
 
 public partial class KeyCounterViewModel : ViewModelBase
 {
@@ -26,11 +26,27 @@ public partial class KeyCounterViewModel : ViewModelBase
     // 前天
     public ObservableCollection<KeyCountItem> DayBeforeYesterdayKeyCounts { get; } = new();
 
+    // 任意一天
+    public ObservableCollection<KeyCountItem> SelectedDateKeyCounts { get; } = new();
+
+    [ObservableProperty]
+    private DateTime? _selectedDate = DateTime.Today;
+
+    partial void OnSelectedDateChanged(DateTime? value) => LoadSelectedDate();
+
     [ObservableProperty]
     private bool _isRecording;
 
     [ObservableProperty]
     private int _selectedTabIndex;
+
+    /// <summary>0 = 默认顺序（按按键名），1 = 按次数从多到少。四个标签页共用。</summary>
+    [ObservableProperty]
+    private int _sortModeIndex;
+
+    public event Action<int>? SortModeChanged;
+
+    partial void OnSortModeIndexChanged(int value) => SortModeChanged?.Invoke(value);
 
     // ===== 新增：首页用聚合属性 =====
     public int KeyTodayPresses => TodayKeyCounts.Sum(item => item.Count);
@@ -57,6 +73,7 @@ public partial class KeyCounterViewModel : ViewModelBase
         _hookService.KeyPressed += OnKeyPressed;
 
         LoadAllCounts();
+        LoadSelectedDate();
 
         if (_configService.GetKeyRecordingAutoStart())
         {
@@ -101,6 +118,19 @@ public partial class KeyCounterViewModel : ViewModelBase
                 OnPropertyChanged(nameof(KeyTotalPresses));
             });
         }
+    }
+
+    private void LoadSelectedDate()
+    {
+        var date = (SelectedDate ?? DateTime.Today).Date;
+        var dict = _dbService.GetKeyCounts(date, date.AddDays(1));
+
+        WpfApplication.Current.Dispatcher.Invoke(() =>
+        {
+            SelectedDateKeyCounts.Clear();
+            foreach (var kv in dict.OrderByDescending(x => x.Value))
+                SelectedDateKeyCounts.Add(new KeyCountItem { Key = kv.Key, Count = kv.Value });
+        });
     }
 
     private void UpdateCollection(ObservableCollection<KeyCountItem> collection, string key)

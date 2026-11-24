@@ -2,9 +2,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using XAssistant.Services.Interfaces;
+using PressViewer.Services.Interfaces;
 
-namespace XAssistant.Services;
+namespace PressViewer.Services;
 
 public class MouseClickHookService : IMouseClickHookService, IDisposable
 {

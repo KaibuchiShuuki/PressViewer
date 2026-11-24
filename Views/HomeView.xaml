@@ -1,340 +1,282 @@
 <UserControl
-    x:Class="XAssistant.Views.HomeView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
+  x:Class="PressViewer.Views.HomeView"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:views="clr-namespace:PressViewer.Views"
+  d:DesignHeight="700"
+  d:DesignWidth="1100"
+  Background="{DynamicResource BgBrush}"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <!--  卡片基础样式  -->
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#E0E0E0" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Margin" Value="10" />
-            <Setter Property="Padding" Value="20" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect
-                        BlurRadius="12"
-                        Opacity="0.1"
-                        ShadowDepth="2" />
-                </Setter.Value>
-            </Setter>
-        </Style>
+  <UserControl.Resources>
+    <!--  详情链接按钮  -->
+    <Style
+      x:Key="LinkButton"
+      TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource AccentDeepBrush}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <TextBlock
+              x:Name="LinkText"
+              Foreground="{TemplateBinding Foreground}"
+              Text="{TemplateBinding Content}" />
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
 
-        <!--  卡片标题（小号、不加粗）  -->
-        <Style x:Key="ModuleTitleStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="Foreground" Value="#555555" />
-            <Setter Property="Margin" Value="0,0,0,0" />
-        </Style>
+    <!--  统计卡大数字  -->
+    <Style x:Key="BigNumberStyle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="30" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource AccentDeepBrush}" />
+    </Style>
+  </UserControl.Resources>
 
-        <!--  今日大数字  -->
-        <Style x:Key="TodayBigStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="32" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#FB64B6" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,0,6" />
-        </Style>
+  <ScrollViewer
+    Background="{DynamicResource BgBrush}"
+    VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24,20,24,28">
 
-        <!--  今日下方提示文字  -->
-        <Style x:Key="TodayHintStyle" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Margin" Value="0,0,0,0" />
-        </Style>
+      <!--  页头  -->
+      <Grid>
+        <StackPanel>
+          <TextBlock Style="{StaticResource PageTitle}" Text="首页" />
+          <TextBlock
+            Margin="0,5,0,0"
+            Style="{StaticResource MutedText}"
+            Text="今天的输入与使用概览" />
+        </StackPanel>
+      </Grid>
 
-        <!--  总次数数字（比今日稍小）  -->
-        <Style x:Key="TotalNumberStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#FB64B6" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
-        </Style>
+      <!--  四张统计卡  -->
+      <UniformGrid
+        Margin="0,18,0,0"
+        Columns="4">
+        <!--  鼠标点击  -->
+        <Border
+          MinHeight="158"
+          Margin="0,0,12,0"
+          Style="{StaticResource Card}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Style="{StaticResource CardTitle}" Text="鼠标点击" />
+              <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <Ellipse
+                  Width="7"
+                  Height="7"
+                  Margin="0,0,6,0"
+                  Fill="{Binding MouseRecordingColor}" />
+                <TextBlock
+                  FontSize="11"
+                  Foreground="{Binding MouseRecordingColor}"
+                  Text="{Binding MouseRecordingStatus}" />
+              </StackPanel>
+            </Grid>
+            <TextBlock
+              Margin="0,14,0,2"
+              Style="{StaticResource BigNumberStyle}"
+              Text="{Binding MouseTodayClicks, Converter={StaticResource Thousands}}" />
+            <TextBlock Style="{StaticResource MutedText}" Text="今日点击" />
+            <Grid Margin="0,12,0,0">
+              <TextBlock Style="{StaticResource MutedText}" Text="{Binding MouseTotalClicks, Converter={StaticResource Thousands}, StringFormat='累计 {0}'}" />
+              <Button
+                HorizontalAlignment="Right"
+                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                CommandParameter="ClickCounter"
+                Content="详情"
+                Style="{StaticResource LinkButton}" />
+            </Grid>
+          </StackPanel>
+        </Border>
 
-        <!--  总次数标签  -->
-        <Style x:Key="TotalLabelStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="#666666" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="Margin" Value="0,2,0,0" />
-        </Style>
+        <!--  键盘按键  -->
+        <Border
+          MinHeight="158"
+          Margin="0,0,12,0"
+          Style="{StaticResource Card}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Style="{StaticResource CardTitle}" Text="键盘按键记录" />
+              <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <Ellipse
+                  Width="7"
+                  Height="7"
+                  Margin="0,0,6,0"
+                  Fill="{Binding KeyRecordingColor}" />
+                <TextBlock
+                  FontSize="11"
+                  Foreground="{Binding KeyRecordingColor}"
+                  Text="{Binding KeyRecordingStatus}" />
+              </StackPanel>
+            </Grid>
+            <TextBlock
+              Margin="0,14,0,2"
+              Style="{StaticResource BigNumberStyle}"
+              Text="{Binding KeyTodayPresses, Converter={StaticResource Thousands}}" />
+            <TextBlock Style="{StaticResource MutedText}" Text="今日按键" />
+            <Grid Margin="0,12,0,0">
+              <TextBlock Style="{StaticResource MutedText}" Text="{Binding KeyTotalPresses, Converter={StaticResource Thousands}, StringFormat='累计 {0}'}" />
+              <Button
+                HorizontalAlignment="Right"
+                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                CommandParameter="KeyCounter"
+                Content="详情"
+                Style="{StaticResource LinkButton}" />
+            </Grid>
+          </StackPanel>
+        </Border>
 
-        <!--  详情链接按钮  -->
-        <Style x:Key="DetailLinkStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#4A90D9" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <TextBlock
-                            FontSize="14"
-                            Foreground="{TemplateBinding Foreground}"
-                            Text="{TemplateBinding Content}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextDecorations" Value="None" />
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="TextDecorations" Value="Underline" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <!--  使用时长  -->
+        <Border
+          MinHeight="158"
+          Margin="0,0,12,0"
+          Style="{StaticResource Card}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Style="{StaticResource CardTitle}" Text="电脑使用" />
+            </Grid>
+            <TextBlock
+              Margin="0,14,0,2"
+              Style="{StaticResource BigNumberStyle}"
+              Text="{Binding TodayUsageText}" />
+            <TextBlock Style="{StaticResource MutedText}" Text="今日使用时长" />
+            <Grid Margin="0,12,0,0">
+              <TextBlock Style="{StaticResource MutedText}" Text="按屏幕活动统计" />
+              <Button
+                HorizontalAlignment="Right"
+                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                CommandParameter="Usage"
+                Content="详情"
+                Style="{StaticResource LinkButton}" />
+            </Grid>
+          </StackPanel>
+        </Border>
 
-        <!--  录制状态文字  -->
-        <Style x:Key="StatusTextStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Margin" Value="4,0,0,0" />
-        </Style>
-    </UserControl.Resources>
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <WrapPanel Margin="20">
-
-            <!--  ==================== 鼠标点击卡片 ====================  -->
-            <Border
-                Width="280"
-                MinHeight="230"
-                Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <!--  第一行：标题 + 录制状态  -->
-                    <Grid Grid.Row="0" Margin="0,0,0,12">
-                        <TextBlock
-                            HorizontalAlignment="Left"
-                            Style="{StaticResource ModuleTitleStyle}"
-                            Text="鼠标点击" />
-                        <StackPanel
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal">
-                            <Ellipse
-                                Width="8"
-                                Height="8"
-                                Fill="{Binding MouseRecordingColor}"
-                                Stroke="Black"
-                                StrokeThickness="1" />
-                            <TextBlock
-                                Foreground="{Binding MouseRecordingColor}"
-                                Style="{StaticResource StatusTextStyle}"
-                                Text="{Binding MouseRecordingStatus}" />
-                        </StackPanel>
-                    </Grid>
-
-                    <!--  第二行：占满高度，居中今日数据  -->
-                    <StackPanel
-                        Grid.Row="1"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource TodayBigStyle}" Text="{Binding MouseTodayClicks, StringFormat=N0}" />
-                        <TextBlock Style="{StaticResource TodayHintStyle}" Text="今日点击" />
-                    </StackPanel>
-
-                    <!--  第三行：总次数靠左，详情按钮靠右，两端对齐  -->
-                    <Grid Grid.Row="2" Margin="0,12,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <!--  总次数  -->
-                        <StackPanel Grid.Column="0" VerticalAlignment="Bottom">
-                            <TextBlock Style="{StaticResource TotalNumberStyle}" Text="{Binding MouseTotalClicks, StringFormat=N0}" />
-                            <TextBlock Style="{StaticResource TotalLabelStyle}" Text="总点击" />
-                        </StackPanel>
-
-                        <!--  详情  -->
-                        <Button
-                            Grid.Column="1"
-                            VerticalAlignment="Bottom"
-                            Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="ClickCounter"
-                            Content="详情"
-                            Style="{StaticResource DetailLinkStyle}" />
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <!--  ==================== 键盘记录卡片 ====================  -->
-            <Border
-                Width="280"
-                MinHeight="230"
-                Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <!--  标题行  -->
-                    <Grid Grid.Row="0" Margin="0,0,0,12">
-                        <TextBlock
-                            HorizontalAlignment="Left"
-                            Style="{StaticResource ModuleTitleStyle}"
-                            Text="键盘记录" />
-                        <StackPanel
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal">
-                            <Ellipse
-                                Width="8"
-                                Height="8"
-                                Fill="{Binding KeyRecordingColor}"
-                                Stroke="Black"
-                                StrokeThickness="1" />
-                            <TextBlock
-                                Foreground="{Binding KeyRecordingColor}"
-                                Style="{StaticResource StatusTextStyle}"
-                                Text="{Binding KeyRecordingStatus}" />
-                        </StackPanel>
-                    </Grid>
-
-                    <!--  今日数据居中  -->
-                    <StackPanel
-                        Grid.Row="1"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource TodayBigStyle}" Text="{Binding KeyTodayPresses, StringFormat=N0}" />
-                        <TextBlock Style="{StaticResource TodayHintStyle}" Text="今日按键" />
-                    </StackPanel>
-
-                    <!--  总次数 + 详情  -->
-                    <Grid Grid.Row="2" Margin="0,12,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" VerticalAlignment="Bottom">
-                            <TextBlock Style="{StaticResource TotalNumberStyle}" Text="{Binding KeyTotalPresses, StringFormat=N0}" />
-                            <TextBlock Style="{StaticResource TotalLabelStyle}" Text="总按键" />
-                        </StackPanel>
-
-                        <Button
-                            Grid.Column="1"
-                            VerticalAlignment="Bottom"
-                            Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="KeyCounter"
-                            Content="详情"
-                            Style="{StaticResource DetailLinkStyle}" />
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <!--  ==================== 电脑使用卡片 ====================  -->
-            <Border
-                Width="280"
-                MinHeight="230"
-                Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <!--  标题  -->
+        <!--  软件使用  -->
+        <Border MinHeight="158" Style="{StaticResource Card}">
+          <StackPanel>
+            <TextBlock Style="{StaticResource CardTitle}" Text="软件使用（今日）" />
+            <ItemsControl
+              Margin="0,10,0,0"
+              MaxHeight="86"
+              ItemsSource="{Binding TopApps}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <DockPanel Margin="0,2">
                     <TextBlock
-                        Grid.Row="0"
-                        Margin="0,0,0,12"
-                        Style="{StaticResource ModuleTitleStyle}"
-                        Text="电脑使用" />
-
-                    <!--  今日时长居中  -->
-                    <StackPanel
-                        Grid.Row="1"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource TodayBigStyle}" Text="{Binding TodayUsageText}" />
-                        <TextBlock Style="{StaticResource TodayHintStyle}" Text="今日使用时长" />
-                    </StackPanel>
-
-                    <!--  底部只有详情按钮右对齐  -->
-                    <Button
-                        Grid.Row="2"
-                        Margin="0,12,0,0"
-                        HorizontalAlignment="Right"
-                        Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                        CommandParameter="Usage"
-                        Content="详情"
-                        Style="{StaticResource DetailLinkStyle}" />
-                </Grid>
-            </Border>
-
-            <!--  ==================== 软件使用卡片 ====================  -->
-            <Border
-                Width="280"
-                MinHeight="230"
-                Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <!--  标题  -->
+                      Margin="8,0,0,0"
+                      DockPanel.Dock="Right"
+                      Foreground="{DynamicResource MutedBrush}"
+                      Text="{Binding FormattedUsage}" />
                     <TextBlock
-                        Grid.Row="0"
-                        Margin="0,0,0,12"
-                        Style="{StaticResource ModuleTitleStyle}"
-                        Text="软件使用（今日）" />
+                      Foreground="{DynamicResource SubInkBrush}"
+                      Text="{Binding DisplayName}"
+                      TextTrimming="CharacterEllipsis" />
+                  </DockPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Grid Margin="0,8,0,0">
+              <Button
+                HorizontalAlignment="Right"
+                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                CommandParameter="AppUsage"
+                Content="详情"
+                Style="{StaticResource LinkButton}" />
+            </Grid>
+          </StackPanel>
+        </Border>
+      </UniformGrid>
 
-                    <!--  软件列表，左对齐  -->
-                    <ItemsControl
-                        Grid.Row="1"
-                        MaxHeight="100"
-                        Margin="0,8,0,6"
-                        VerticalAlignment="Center"
-                        ItemsSource="{Binding TopApps}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock
-                                    Margin="0,3"
-                                    FontSize="14"
-                                    Foreground="#333"
-                                    TextAlignment="Left">
-                                    <Run Text="• " /><Run Text="{Binding DisplayName, Mode=OneWay}" />
-                                </TextBlock>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+      <!--  热力图模块  -->
+      <Border
+        Margin="0,16,0,0"
+        Cursor="Hand"
+        MouseLeftButtonUp="OnHeatmapCardClick"
+        Style="{StaticResource Card}">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
 
-                    <!--  底部详情  -->
-                    <Button
-                        Grid.Row="2"
-                        Margin="0,12,0,0"
-                        HorizontalAlignment="Right"
-                        Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                        CommandParameter="AppUsage"
-                        Content="详情"
-                        Style="{StaticResource DetailLinkStyle}" />
-                </Grid>
-            </Border>
+          <DockPanel Grid.Row="0">
+            <StackPanel>
+              <TextBlock Style="{StaticResource SectionTitle}" Text="热力图" />
+              <TextBlock
+                Margin="0,4,0,0"
+                Style="{StaticResource MutedText}"
+                Text="全部时间 · 键盘按键分布与鼠标点击" />
+            </StackPanel>
 
-        </WrapPanel>
-    </ScrollViewer>
+            <StackPanel
+              HorizontalAlignment="Right"
+              VerticalAlignment="Center"
+              Orientation="Horizontal">
+              <Border
+                Margin="0,0,8,0"
+                Padding="10,6"
+                Background="{DynamicResource AccentSoftBrush}"
+                CornerRadius="8">
+                <TextBlock
+                  FontSize="12"
+                  Foreground="{DynamicResource AccentDeepBrush}"
+                  Text="{Binding MouseLeftTotal, Converter={StaticResource Thousands}, StringFormat='左键 {0}'}" />
+              </Border>
+              <Border
+                Margin="0,0,8,0"
+                Padding="10,6"
+                Background="{DynamicResource AccentSoftBrush}"
+                CornerRadius="8">
+                <TextBlock
+                  FontSize="12"
+                  Foreground="{DynamicResource AccentDeepBrush}"
+                  Text="{Binding MouseMiddleTotal, Converter={StaticResource Thousands}, StringFormat='中键 {0}'}" />
+              </Border>
+              <Border
+                Margin="0,0,14,0"
+                Padding="10,6"
+                Background="{DynamicResource AccentSoftBrush}"
+                CornerRadius="8">
+                <TextBlock
+                  FontSize="12"
+                  Foreground="{DynamicResource AccentDeepBrush}"
+                  Text="{Binding MouseRightTotal, Converter={StaticResource Thousands}, StringFormat='右键 {0}'}" />
+              </Border>
+              <Button
+                VerticalAlignment="Center"
+                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                CommandParameter="Heatmap"
+                Content="查看详情"
+                Style="{StaticResource LinkButton}" />
+            </StackPanel>
+          </DockPanel>
+
+          <views:KeyboardHeatmapView
+            Grid.Row="1"
+            Height="300"
+            Margin="0,12,0,0"
+            ItemsSource="{Binding HeatmapKeys}" />
+        </Grid>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
 </UserControl>
