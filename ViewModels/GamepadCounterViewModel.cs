@@ -110,6 +110,14 @@ public partial class GamepadCounterViewModel : ViewModelBase
         {
             UpdateCollection(GamepadCounts, button);
             UpdateCollection(TodayGamepadCounts, button);
+
+            // 「查看历史」正停在今天时也要跟着涨，不需要手动刷新
+            if (SelectedDate?.Date == today)
+            {
+                UpdateCollection(HistoryGamepadCounts, button);
+                OnPropertyChanged(nameof(HistoryTotal));
+            }
+
             OnPropertyChanged(nameof(GamepadTodayPresses));
             OnPropertyChanged(nameof(GamepadTotalPresses));
             OnPropertyChanged(nameof(CoveredGamepadButtons));
@@ -173,5 +181,6 @@ public partial class GamepadCounterViewModel : ViewModelBase
     {
         _currentDate = DateTime.Today;
         LoadAllCounts();
+        LoadCountsForDate(SelectedDate ?? DateTime.Today);
     }
 }
