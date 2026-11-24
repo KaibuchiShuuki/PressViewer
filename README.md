@@ -1,102 +1,80 @@
 # PressViewer
 
-> **本项目基于 [xuhk/XAssistant](https://github.com/xuhk/XAssistant) 修改**，原作者 xuhk，遵循 MIT License。
-> 1.0.0 / 1.0.1 由原作者完成；1.1.0 起由 Shuuki 维护：更名 PressViewer、手柄统计、主题与设置、真实鼠标/手柄图形等。
-> 原版权声明与许可文本保留在 [LICENSE](LICENSE)。
+<p align="center">
+  <img src="Assets/logo.png" width="120" alt="PressViewer logo" />
+</p>
 
-**PressViewer** 是一款 Windows 桌面活动统计工具（WPF / C# / .NET 10），常驻系统托盘，记录键盘、鼠标点击数及使用时长。**所有数据仅保存在本机，不联网上传。**
+**PressViewer** 是一个 Windows 桌面输入统计工具，用热力图把「键盘、鼠标、手柄」的使用情况画出来：哪些键按得多、左键还是右键用得多、手柄哪个键被磨得最狠，一眼就能看到。
 
-## 说明
+所有数据只写在本机的 `data/` 目录里，不联网、不上传。
 
-这是一个 **vibe coding** 产物，作者本人对 C# / .NET 并不熟悉。项目仅在作者自己的机器上验证可用（Windows 10 专业版 22H2 build 19045，64 位），**不保证其它环境兼容**。不懂的地方可以直接问 AI，或者干脆让AI写一个更好。
-
-## 本次更新（1.0.1）
-
-本版主要修复采集丢数据、服务缺席和时长重复计算的问题，并新增「关于」页。
-
-### 新增
-
-- 新增「关于」页面：查看当前版本、检查更新和更新日志。
-
-### 修复
-
-- 修复断电或强制结束后，电脑使用时长把停机时间也算进去的问题。
-- 修复主程序运行时，当天的电脑使用时长有时不写入数据库、数字长时间停在旧值。
-- 修复程序重启后，同一个应用被重复计时、当天总时长翻倍。
-- 修复按键和鼠标必须先打开统计页才开始记录的问题；现在随程序启动就记录，采集启动失败会自动重试并写日志。
-
-### 优化
-
-- 优化开机自启速度。
-- 后台服务异常退出后会自动重启；升级主程序时不会删除后台服务文件。
-
-更早版本见 [CHANGELOG.md](./CHANGELOG.md)。
-
-## 安装
-
-1. 从 Releases 下载一种包：`PressViewer-win-x64-*.zip`（自带运行时，体积大，开箱即用）或 `PressViewer-win-x64-noruntime-*.zip`（不带运行时，体积小，需要 .NET 10 Desktop Runtime）。
-2. 解压到任意文件夹（程序本体在 `app\`，后台服务在 `PressViewer.Service\`，都不用打开；不要直接双击 `app\PressViewer.exe`）。
-3. 双击 `install.cmd`，按提示允许管理员权限。首次安装会让你选择安装目录（直接回车使用 `C:\PressViewer`）；安装脚本会一并安装后台服务并启动程序。只想装主程序或只更新服务时，分别双击 `install-app.cmd` / `install-service.cmd`。
-4. 默认**不会**开机自启动。需要常驻统计的话，在应用界面左侧勾选"**开机自动启动**"：登录时由计划任务立即拉起（等用户配置目录就绪后再读写数据），注册表 Run 键作为兜底。
-
-> 安装脚本会一并安装后台服务（负责「电脑使用时长」）。安装目录可以自己选，以后升级会自动识别。请装在固定的本地磁盘，放在移动盘或可能离线的副盘上时，开机时后台服务可能起不来。
-
-## 升级
-
-不需要手动从托盘退出——退出要点鼠标，反而容易漏记。
-
-### 从 Release 包升级
-
-1. 下载新版对应的一种包（带运行时 / 不带运行时都行，脚本和目录结构一样），解压到任意文件夹；同样不要直接点 `app\PressViewer.exe`。
-2. 双击 `install.cmd`（只升级主程序或服务时用 `install-app.cmd` / `install-service.cmd`）。脚本会自动找到现有安装目录，结束正在运行的程序和后台服务、备份旧版本、替换文件、更新服务并启动。旧版本会备份到安装目录旁边，最多保留最近 3 份。
-
-数据保存在 `%APPDATA%\PressViewer` 和 `C:\ProgramData\PressViewer\UsageTracker`，不随安装目录覆盖。程序不会自动下载或安装更新；可以在「关于」页点「检查更新」确认有没有新版本，再打开下载页。
-
-### 从源码更新
-
-管理员 PowerShell 运行 `.\install.ps1`：默认构建并部署主程序（自动识别安装目录，`-InstallDir` 可指定）。
-
-后台服务有更新时，再在 `PressViewer.Service` 目录运行 `.\publish-and-install.ps1`。
+> 本项目是 [xuhk/XAssistant](https://github.com/xuhk/XAssistant) 的 fork。
+> 1.0.0 / 1.0.1 由原作者 **xuhk** 完成；1.1.0 起由 **Shuuki** 维护，做了更名、真实图形热力图、手柄统计、主题系统与设置页。
+> 原版权声明与 MIT 许可文本保留在 [LICENSE](LICENSE)。
 
 ## 功能
 
-| 功能            | 说明                                                           |
-| --------------- | -------------------------------------------------------------- |
-| ⌨️ 键盘按键统计 | 按键计数，区分左右修饰键（Ctrl / Shift / Alt / Win）           |
-| 🖱️ 鼠标点击统计 | 记录左 / 中 / 右键点击次数                                     |
-| 💻 电脑使用时长 | 记录电脑每天的开机 / 使用时长，依赖后台服务 PressViewer.Service |
-| 📊 应用使用时长 | WMI 追踪各应用使用时长——**不完善，统计可能有偏差**             |
-| ℹ️ 关于         | 查看当前版本、手动检查更新和更新日志                           |
+**热力图**
+- 104 键 ANSI 键盘热力图，按键次数直接写在键帽右下角，颜色按次数映射（对数刻度），0 次不着色。
+- 真实鼠标图形：左键 / 滚轮 / 右键分别着色，中键次数显示在滚轮上。
+- 真实手柄图形：十字键、ABXY、双摇杆按下、LB/RB、LT/RT、Start/Back，按 XInput 键位映射。
+- 三种图形各自独立计算刻度，不会因为键盘按得多而让鼠标全是白色。
+- 时间范围：总计、今日、昨天、前天、近七天、近三十天，或自选起止日期。
+- 窗口最大化时键盘自动放大；键盘、鼠标、手柄同屏显示。
 
-关闭窗口只是隐藏到托盘，托盘菜单中才有"退出"。
+**记录**
+- 键盘按键记录：总计 / 今天 / 昨天 / 前天 / 自选日期，可按默认顺序或次数排序。
+- 鼠标点击记录：左中右累计、当日、任意历史日期。
+- 手柄按键记录：累计、今日、任意历史日期。
+- 电脑使用时长与软件使用时长（由后台服务采集）。
+- 低层键盘 / 鼠标钩子 + XInput 轮询，程序启动即开始记录，采集异常会重试并写日志。
 
-## 支持环境
+**界面**
+- 12 套主题色（樱花轻语、极光幻彩、深海蓝调、落日熔金、森林秘语、香槟鎏金、薰衣草梦境、薄荷汽水、青碧如洗、珊瑚晚霞、石墨夜色、霓虹虹光），热力色带跟随主题。
+- 深色 / 浅色模式，主题色与深浅色可以自由组合。
+- 数字千分位、小按键 K / M 缩写（避免长数字溢出键帽）。
+- 独立的应用日志页、设置页。
 
-- 亲测环境：Windows 10 专业版 22H2（19045），64 位
-- 带运行时的包开箱即用；不带运行时的包需要 .NET 10 Desktop Runtime（安装脚本会检查并给出下载地址）
-- 其它环境不保证兼容
+## 下载与运行
 
-## 数据存储
+1. 到 [Releases](https://github.com/KaibuchiShuuki/PressViewer/releases/latest) 下载 `PressViewer-1.1.0-win-x64.zip`（自包含 .NET 10，不需要额外安装运行时）。
+2. 解压到任意目录（例如 `D:\soft\PressViewer`）。
+3. 运行 `PressViewer.exe`。首次启动会在程序目录下创建 `data/`，并从旧版本（XAssistant / PressViewer）的 `%APPDATA%` 复制已有记录。
 
-- 主程序数据：`%APPDATA%\PressViewer`（统计数据库与配置 `appsettings.json`）
-- 后台服务数据：`C:\ProgramData\PressViewer\UsageTracker`（电脑使用时长数据库）
-- 日志：`%APPDATA%\PressViewer\logs\`（滚动保留 31 天）
+开机自启、关闭行为（最小化到托盘 / 直接退出）、自动开始监测，都在「设置」页里。
 
-均为本地文件。只在你手动点「检查更新」时向 GitHub 查询一次最新版本号（不发送任何本机数据，不做启动自动检查）。
+## 数据与隐私
 
-## 构建
+- 数据目录：**程序目录下的 `data/`**（例如 `D:\soft\PressViewer\app\data`）
+  - `key_data.db`、`click_data.db`、`gamepad_data.db`、`app_usage.db`
+  - `appsettings.json`、`logs/`
+- 不包含任何网络请求；除「检查更新」会读取本仓库的 GitHub Releases 外，不访问网络。
+- `data/`、`*.db`、`logs/` 已写进 `.gitignore`，不会进入版本库。
+- 想清空记录：退出程序后删除 `data/` 里对应的 `.db` 文件即可。
+
+## 系统要求
+
+- Windows 10 2004 及以上 / Windows 11，64 位。
+- 自包含包无需安装 .NET；从源码构建需要 .NET SDK 10。
+
+## 从源码构建
 
 ```powershell
-# 构建整个解决方案（主程序 + 后台服务）
-dotnet build PressViewer.sln -c Release
-
-# 打两种 Release 包（带运行时 / 不带运行时；自动排除 Local 私有模块）
-# 打包脚本会分别用 --self-contained true/false 发布主程序和服务
-powershell -ExecutionPolicy Bypass -File tools\package-release.ps1
+dotnet build PressViewer.csproj -c Release
+dotnet publish PressViewer.csproj -c Release -r win-x64 --self-contained true -o ..\app
 ```
 
-需安装 [.NET 10 SDK](https://dotnet.microsoft.com/download)。
+后台的「电脑使用统计」服务在 `XAssistant.Service/` 目录，安装方式见该目录下的脚本；主程序不依赖它也能运行，只是「电脑使用统计」页会没有数据。
 
-## 许可证
+## 已知限制
 
-[MIT](./LICENSE)
+- **Fn 键**：多数键盘的 Fn 由键盘固件处理，不经过操作系统，因此无法统计；热力图上固定显示 0。
+- **Share / Guide**：XInput 不暴露这两个键，图形保留但计数恒为 0。
+- 手柄只跟踪第一个已连接的 XInput 设备；DS4 / Switch Pro 等非 XInput 手柄需要系统层映射（如 Steam Input）后才能被识别。
+- 仅支持 Windows。
+
+## 致谢与许可
+
+- 原始项目：[xuhk/XAssistant](https://github.com/xuhk/XAssistant)，作者 xuhk。
+- 本项目遵循 [MIT License](LICENSE)，保留原版权声明。
+- 图标与界面由本项目重新设计。
