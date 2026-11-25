@@ -45,3 +45,9 @@ service/
 *.bak
 bin/
 obj/
+
+## 设计稿与截图（本地留存，不入库）
+designs/
+*-shot.png
+*-publish*/
+
