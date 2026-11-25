@@ -32,7 +32,8 @@
 
    确认没有数据库、日志、截图混进来。
 
-4. 截图与临时发布目录（`*-publish*`、`pv-*`、`q-*` 等）不要放进仓库。
+4. 截图、设计稿与临时发布目录不要放进仓库：`designs/`、`*-shot.png`、`*-publish*/`、`pv-*`、`q-*` 都已写进 `.gitignore`，本地留着方便对照，但不入库。
+5. 发布二进制走 GitHub Releases：从 `app/` 打包，排除 `data/` 与 `*.pdb`，zip 内顶层是 `PressViewer/` 目录；上传后回读 release 确认中文正文没有乱码（提交 JSON 时用 UTF-8 字节数组，别让 PowerShell 按 ANSI 编码发出去）。
 
 ## 构建与发布
 
