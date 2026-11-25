@@ -201,9 +201,8 @@ public partial class App : System.Windows.Application
         // 显式解析一次，保证即使主窗没显示 / 从未点开统计页，采集也已经装上。
         var config = provider.GetRequiredService<IConfigurationService>();
 
-        // 外观与数字格式要在任何窗口出现之前生效，避免启动瞬间闪一下默认配色
+        // 外观要在任何窗口出现之前生效，避免启动瞬间闪一下默认配色
         ThemeService.Apply(config.GetTheme(), config.GetDarkMode());
-        NumberFormatService.Set(config.GetShowThousandsSeparator());
 
         _appLogger.LogInformation(
             "采集配置：键盘自动启动={Keyboard}，鼠标自动启动={Mouse}，手柄自动启动={Gamepad}",

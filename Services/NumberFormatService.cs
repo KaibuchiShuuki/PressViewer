@@ -1,55 +1,16 @@
-using System;
 using System.Globalization;
 
 namespace PressViewer.Services;
 
 /// <summary>
-/// 数字显示格式：是否使用千分位（1,145）。
-/// 全局一份，设置页改了立刻通知各页面重绑。
+/// 数字显示格式：从 v1.1.1 起统一为带千分位的完整数字（1,145）。
+///
+/// 以前的两个开关（千分位、小按键 K/M 缩写）已经取消：完整数字是唯一的显示方式，
+/// 图形里放不下时由控件自己缩字号 / 折行，而不是把数字缩写掉。
 /// </summary>
 public static class NumberFormatService
 {
-    public static bool UseSeparator { get; private set; } = true;
+    public static string Format(int value) => value.ToString("N0", CultureInfo.CurrentCulture);
 
-    /// <summary>小面积按键（滚轮、肩键、ABXY 等）是否用 K/M 缩写。</summary>
-    public static bool CompactSmall { get; private set; } = true;
-
-    /// <summary>格式变化时触发；页面 VM 收到后通知所有数字属性重新求值。</summary>
-    public static event Action? Changed;
-
-    public static void Set(bool useSeparator)
-    {
-        if (UseSeparator == useSeparator)
-            return;
-
-        UseSeparator = useSeparator;
-        Changed?.Invoke();
-    }
-
-    public static void SetCompactSmall(bool compact)
-    {
-        if (CompactSmall == compact)
-            return;
-
-        CompactSmall = compact;
-        Changed?.Invoke();
-    }
-
-    public static string Format(int value) =>
-        UseSeparator ? value.ToString("N0", CultureInfo.CurrentCulture) : value.ToString(CultureInfo.CurrentCulture);
-
-    public static string Format(long value) =>
-        UseSeparator ? value.ToString("N0", CultureInfo.CurrentCulture) : value.ToString(CultureInfo.CurrentCulture);
-
-    /// <summary>小面积按键专用：开启开关且超过 999 时缩写为 1.2K / 1.3M。</summary>
-    public static string FormatCompact(int value)
-    {
-        if (!CompactSmall || value < 1000)
-            return value.ToString("0");
-
-        if (value < 1_000_000)
-            return (value / 1000.0).ToString("0.#", CultureInfo.CurrentCulture) + "K";
-
-        return (value / 1_000_000.0).ToString("0.#", CultureInfo.CurrentCulture) + "M";
-    }
+    public static string Format(long value) => value.ToString("N0", CultureInfo.CurrentCulture);
 }

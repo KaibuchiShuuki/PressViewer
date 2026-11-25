@@ -73,7 +73,7 @@
           Style="{StaticResource Card}">
           <StackPanel>
             <Grid>
-              <TextBlock Style="{StaticResource CardTitle}" Text="鼠标点击" />
+              <TextBlock Style="{StaticResource CardTitle}" Text="鼠标点击记录" />
               <StackPanel
                 HorizontalAlignment="Right"
                 Orientation="Horizontal">
@@ -144,11 +144,47 @@
           </StackPanel>
         </Border>
 
-        <!--  使用时长  -->
+        <!--  手柄按键  -->
         <Border
           MinHeight="158"
           Margin="0,0,12,0"
           Style="{StaticResource Card}">
+          <StackPanel>
+            <Grid>
+              <TextBlock Style="{StaticResource CardTitle}" Text="手柄按键记录" />
+              <StackPanel
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <Ellipse
+                  Width="7"
+                  Height="7"
+                  Margin="0,0,6,0"
+                  Fill="{Binding GamepadRecordingColor}" />
+                <TextBlock
+                  FontSize="11"
+                  Foreground="{Binding GamepadRecordingColor}"
+                  Text="{Binding GamepadRecordingStatus}" />
+              </StackPanel>
+            </Grid>
+            <TextBlock
+              Margin="0,14,0,2"
+              Style="{StaticResource BigNumberStyle}"
+              Text="{Binding GamepadTodayPresses, Converter={StaticResource Thousands}}" />
+            <TextBlock Style="{StaticResource MutedText}" Text="今日按键" />
+            <Grid Margin="0,12,0,0">
+              <TextBlock Style="{StaticResource MutedText}" Text="{Binding GamepadTotalPresses, Converter={StaticResource Thousands}, StringFormat='累计 {0}'}" />
+              <Button
+                HorizontalAlignment="Right"
+                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                CommandParameter="GamepadCounter"
+                Content="详情"
+                Style="{StaticResource LinkButton}" />
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!--  使用时长  -->
+        <Border MinHeight="158" Style="{StaticResource Card}">
           <StackPanel>
             <Grid>
               <TextBlock Style="{StaticResource CardTitle}" Text="电脑使用" />
@@ -164,41 +200,6 @@
                 HorizontalAlignment="Right"
                 Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                 CommandParameter="Usage"
-                Content="详情"
-                Style="{StaticResource LinkButton}" />
-            </Grid>
-          </StackPanel>
-        </Border>
-
-        <!--  软件使用  -->
-        <Border MinHeight="158" Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock Style="{StaticResource CardTitle}" Text="软件使用（今日）" />
-            <ItemsControl
-              Margin="0,10,0,0"
-              MaxHeight="86"
-              ItemsSource="{Binding TopApps}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <DockPanel Margin="0,2">
-                    <TextBlock
-                      Margin="8,0,0,0"
-                      DockPanel.Dock="Right"
-                      Foreground="{DynamicResource MutedBrush}"
-                      Text="{Binding FormattedUsage}" />
-                    <TextBlock
-                      Foreground="{DynamicResource SubInkBrush}"
-                      Text="{Binding DisplayName}"
-                      TextTrimming="CharacterEllipsis" />
-                  </DockPanel>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <Grid Margin="0,8,0,0">
-              <Button
-                HorizontalAlignment="Right"
-                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                CommandParameter="AppUsage"
                 Content="详情"
                 Style="{StaticResource LinkButton}" />
             </Grid>

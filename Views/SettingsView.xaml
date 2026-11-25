@@ -7,6 +7,7 @@
 
   <UserControl.Resources>
     <conv:ColorToBrushConverter x:Key="ColorToBrush" />
+    <conv:InverseBoolConverter x:Key="InverseBool" />
 
     <Style x:Key="ThemeItem" TargetType="ListBoxItem">
       <Setter Property="Cursor" Value="Hand" />
@@ -134,24 +135,10 @@
         </StackPanel>
       </Border>
 
-      <!--  数字与数据  -->
+      <!--  数据  -->
       <Border Style="{StaticResource Card}">
         <StackPanel>
-          <TextBlock Style="{StaticResource SectionTitle}" Text="数字与数据" />
-
-          <CheckBox
-            Margin="0,16,0,0"
-            Content="显示千分位分隔符"
-            IsChecked="{Binding ShowThousandsSeparator, Mode=TwoWay}" />
-          <TextBlock Style="{StaticResource SettingHint}" Text="影响所有计数：首页、热力图、表格与汇总。" />
-
-          <CheckBox
-            Margin="0,14,0,0"
-            Content="小按键用 K / M 缩写"
-            IsChecked="{Binding CompactSmallNumbers, Mode=TwoWay}" />
-          <TextBlock Style="{StaticResource SettingHint}" Text="滚轮、肩键、ABXY 等面积小的按键，次数超过 999 时显示为 1.2K、1.3M，避免数字溢出图形。" />
-
-          <Separator Margin="0,18,0,14" />
+          <TextBlock Style="{StaticResource SectionTitle}" Text="数据" />
 
           <TextBlock Style="{StaticResource SettingLabel}" Text="数据目录" />
           <TextBlock
@@ -171,6 +158,23 @@
               Command="{Binding OpenLogFolderCommand}"
               Content="打开日志目录" />
           </StackPanel>
+
+          <Separator Margin="0,18,0,14" />
+
+          <TextBlock Style="{StaticResource SettingLabel}" Text="压缩历史数据" />
+          <TextBlock
+            Margin="0,4,0,10"
+            FontSize="12.5"
+            LineHeight="19"
+            Foreground="{DynamicResource SubInkBrush}"
+            Text="{Binding CompactionStatus}"
+            TextWrapping="Wrap" />
+          <Button
+            HorizontalAlignment="Left"
+            MinWidth="130"
+            Command="{Binding CompactHistoryCommand}"
+            Content="压缩今天之前的数据"
+            IsEnabled="{Binding IsCompacting, Converter={StaticResource InverseBool}}" />
 
           <TextBlock
             Margin="0,16,0,0"

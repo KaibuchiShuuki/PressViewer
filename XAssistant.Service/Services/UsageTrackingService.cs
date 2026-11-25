@@ -35,6 +35,11 @@ public class UsageTrackingService : BackgroundService
     }
     private static readonly TimeSpan SaveInterval = TimeSpan.FromSeconds(7); // 定时保存间隔
 
+    /// <summary>无键盘/鼠标输入超过这个秒数就认为人不在电脑前，暂停计时。</summary>
+    private const long IdleThresholdSeconds = 600;
+
+    private volatile bool _isIdle;
+
     public UsageTrackingService(ILogger<UsageTrackingService> logger)
     {
         _logger = logger;
@@ -138,9 +143,11 @@ public class UsageTrackingService : BackgroundService
             _isSuspended = false;
             CheckDayRollover();
             LogEvent("Resume");
-            StartSession();
+            // 系统醒了不代表人就回来了，仍空闲就先不计时，等输入后再由 UpdateIdleState 续上
+            if (!_isIdle)
+                StartSession();
             WriteHeartbeat(GetTodaySeconds());
-            _logger.LogInformation("System resumed, new session started.");
+            _logger.LogInformation("System resumed.");
         }
     }
 
@@ -431,18 +438,51 @@ public class UsageTrackingService : BackgroundService
         }
     }
 
-    /// <summary>把秒表里的时长落库，处理跨天，再按挂起状态决定是否重新计时。</summary>
+    /// <summary>把秒表里的时长落库，处理跨天，再按挂起 / 空闲状态决定是否重新计时。</summary>
     private void SaveSessionAndRestart()
     {
         StopSessionAndSave();
         CheckDayRollover();
-        if (!_isSuspended)
+        UpdateIdleState();
+        if (!_isSuspended && !_isIdle)
         {
             StartSession();
         }
         else
         {
-            _logger.LogDebug("Skipping session start because system is suspended.");
+            _logger.LogDebug(
+                "Skipping session start because system is suspended or user is idle."
+            );
+        }
+    }
+
+    /// <summary>
+    /// 按「最后一次输入」的间隔判断用户是否离开。离开超过阈值就停表并补一条 Suspend，
+    /// 有人动键鼠后补 Resume 继续计时——否则通宵开着机整夜都会被算成使用时长。
+    /// </summary>
+    private void UpdateIdleState()
+    {
+        var idleSeconds = UserIdleDetector.IdleSeconds();
+        if (idleSeconds < 0)
+            return; // 拿不到输入时间就沿用上一次的判断，不擅自停表
+
+        var nowIdle = idleSeconds >= IdleThresholdSeconds;
+        if (nowIdle == _isIdle)
+            return;
+
+        _isIdle = nowIdle;
+        if (nowIdle)
+        {
+            StopSessionAndSave();
+            LogEvent("Suspend");
+            _logger.LogInformation("User idle for {Seconds}s, session paused.", idleSeconds);
+        }
+        else
+        {
+            LogEvent("Resume");
+            StartSession();
+            WriteHeartbeat(GetTodaySeconds());
+            _logger.LogInformation("User is back, session resumed.");
         }
     }
 

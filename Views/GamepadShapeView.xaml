@@ -2,5 +2,6 @@
   x:Class="PressViewer.Views.GamepadShapeView"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Canvas x:Name="Root" Width="640" Height="330" />
+  <!--  画布按 880×520 设计，外面用 Viewbox 等比缩放；尺寸只为比例服务  -->
+  <Canvas x:Name="Root" Width="880" Height="520" />
 </UserControl>

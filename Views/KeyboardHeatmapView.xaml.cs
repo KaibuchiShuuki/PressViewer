@@ -14,6 +14,7 @@ using FontFamily = System.Windows.Media.FontFamily;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using VerticalAlignment = System.Windows.VerticalAlignment;
 using Point = System.Windows.Point;
+using Size = System.Windows.Size;
 using TextAlignment = System.Windows.TextAlignment;
 
 namespace PressViewer.Views;
@@ -73,7 +74,6 @@ public partial class KeyboardHeatmapView : UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         ThemeService.Changed += OnAppearanceChanged;
-        NumberFormatService.Changed += OnAppearanceChanged;
         _timer ??= new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = TimeSpan.FromMilliseconds(500),
@@ -99,7 +99,6 @@ public partial class KeyboardHeatmapView : UserControl
     {
         _timer?.Stop();
         ThemeService.Changed -= OnAppearanceChanged;
-        NumberFormatService.Changed -= OnAppearanceChanged;
     }
 
     private void OnAppearanceChanged()
@@ -209,6 +208,7 @@ public partial class KeyboardHeatmapView : UserControl
             cap.CountText.Foreground = new SolidColorBrush(fg) { Opacity = count > 0 ? 1 : 0.35 };
             cap.CountText.Text = NumberFormatService.Format(count);
             cap.CountText.Visibility = isFn ? Visibility.Collapsed : Visibility.Visible;
+            FitCount(cap.CountText, cap.Border.Width - 9);
         }
 
         int total = counts.Values.Sum();
@@ -248,8 +248,8 @@ public partial class KeyboardHeatmapView : UserControl
                 Text = "0",
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Bottom,
-                Margin = new Thickness(0, 0, 5, 2),
-                FontSize = 10.5,
+                Margin = new Thickness(0, 0, 4, 1),
+                FontSize = 9.5,
                 FontWeight = FontWeights.Bold,
             };
 
@@ -284,6 +284,28 @@ public partial class KeyboardHeatmapView : UserControl
         TextBlock SubText,
         TextBlock CountText
     );
+
+    /// <summary>
+    /// 键帽右下角的次数：按字符数估宽来缩字号。
+    /// 需求是六位数（如 123,456）在 1u 键上也放得下，所以基准字号降到 9.5、下限 6，
+    /// 不再依赖 Measure（未挂进可视树时 DesiredSize 不可靠）。
+    /// </summary>
+    private static void FitCount(TextBlock tb, double maxWidth)
+    {
+        const double baseSize = 9.5;
+        var text = tb.Text ?? string.Empty;
+        if (maxWidth <= 0 || text.Length == 0)
+        {
+            tb.FontSize = baseSize;
+            return;
+        }
+
+        double em = 0;
+        foreach (var ch in text)
+            em += ch < 128 ? 0.56 : 1.0;
+
+        tb.FontSize = Math.Min(baseSize, Math.Max(6.0, maxWidth / em));
+    }
 
     private sealed record KeyCapDef(
         string Id,

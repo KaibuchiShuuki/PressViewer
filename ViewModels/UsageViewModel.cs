@@ -98,7 +98,12 @@ public partial class UsageViewModel : ViewModelBase
             var eventSeconds = _todayCorrectedSeconds;
             if (_activeSessionStartTime.HasValue)
             {
-                eventSeconds += (long)(DateTime.Now - _activeSessionStartTime.Value).TotalSeconds;
+                // 活跃段可能从昨天就开始了（通宵没关机会话不断），今日只该算零点之后的部分
+                var activeFrom = _activeSessionStartTime.Value;
+                var todayStart = DateTime.Today;
+                if (activeFrom < todayStart)
+                    activeFrom = todayStart;
+                eventSeconds += (long)(DateTime.Now - activeFrom).TotalSeconds;
             }
 
             // 如果管道值和事件计算值差距大于5秒，记录警告并优先使用事件计算值

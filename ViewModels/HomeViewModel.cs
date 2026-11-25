@@ -11,24 +11,28 @@ public partial class HomeViewModel : ViewModelBase
 {
     private readonly ClickCounterViewModel _clickCounter;
     private readonly KeyCounterViewModel _keyCounter;
+    private readonly GamepadCounterViewModel _gamepadCounter;
     private readonly UsageViewModel _usage;
     private readonly AppUsageViewModel _appUsage;
 
     public HomeViewModel(
         ClickCounterViewModel clickCounter,
         KeyCounterViewModel keyCounter,
+        GamepadCounterViewModel gamepadCounter,
         UsageViewModel usage,
         AppUsageViewModel appUsage
     )
     {
         _clickCounter = clickCounter;
         _keyCounter = keyCounter;
+        _gamepadCounter = gamepadCounter;
         _usage = usage;
         _appUsage = appUsage;
 
         // 监听子 ViewModel 的属性变化，及时转发到自身同名的属性
         _clickCounter.PropertyChanged += OnClickCounterPropertyChanged;
         _keyCounter.PropertyChanged += OnKeyCounterPropertyChanged;
+        _gamepadCounter.PropertyChanged += OnGamepadCounterPropertyChanged;
         _usage.PropertyChanged += OnUsagePropertyChanged;
         _appUsage.PropertyChanged += OnAppUsagePropertyChanged;
     }
@@ -50,6 +54,13 @@ public partial class HomeViewModel : ViewModelBase
 
     /// <summary>首页热力图模块直接复用键盘页的实时计数集合。</summary>
     public IEnumerable<KeyCountItem> HeatmapKeys => _keyCounter.KeyCounts;
+
+    // ========== 手柄记录模块 ==========
+    public string GamepadRecordingStatus => _gamepadCounter.GamepadRecordingStatus;
+    public System.Windows.Media.Brush GamepadRecordingColor =>
+        _gamepadCounter.GamepadRecordingColor;
+    public int GamepadTodayPresses => _gamepadCounter.GamepadTodayPresses;
+    public int GamepadTotalPresses => _gamepadCounter.GamepadTotalPresses;
 
     // ========== 电脑使用模块 ==========
     // 假设 UsageViewModel 里有 TodayUsageText 属性（带格式化时长）
@@ -107,8 +118,26 @@ public partial class HomeViewModel : ViewModelBase
         }
     }
 
-    private void OnUsagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnGamepadCounterPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        switch (e.PropertyName)
+        {
+            case nameof(GamepadCounterViewModel.GamepadRecordingStatus):
+                OnPropertyChanged(nameof(GamepadRecordingStatus));
+                break;
+            case nameof(GamepadCounterViewModel.GamepadRecordingColor):
+                OnPropertyChanged(nameof(GamepadRecordingColor));
+                break;
+            case nameof(GamepadCounterViewModel.GamepadTodayPresses):
+                OnPropertyChanged(nameof(GamepadTodayPresses));
+                break;
+            case nameof(GamepadCounterViewModel.GamepadTotalPresses):
+                OnPropertyChanged(nameof(GamepadTotalPresses));
+                break;
+        }
+    }
+
+    private void OnUsagePropertyChanged(object? sender, PropertyChangedEventArgs e)    {
         if (e.PropertyName == nameof(UsageViewModel.TodayUsageText))
             OnPropertyChanged(nameof(TodayUsageText));
     }

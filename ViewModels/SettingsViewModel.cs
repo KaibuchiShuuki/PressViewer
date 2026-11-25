@@ -60,27 +60,17 @@ public partial class SettingsViewModel : ViewModelBase
         _config.SetGamepadRecordingAutoStart(value);
     }
 
-    [ObservableProperty]
-    private bool _showThousandsSeparator;
-
-    [ObservableProperty]
-    private bool _compactSmallNumbers;
-
-    partial void OnShowThousandsSeparatorChanged(bool value)
-    {
-        NumberFormatService.Set(value);
-        _config.SetShowThousandsSeparator(value);
-    }
-
-    partial void OnCompactSmallNumbersChanged(bool value)
-    {
-        NumberFormatService.SetCompactSmall(value);
-        _config.SetCompactSmallNumbers(value);
-    }
-
     public string DataFolder => AppDataPathHelper.GetAppDataFolder();
 
     public string VersionText => AppVersion.Display;
+
+    /// <summary>压缩功能的说明 / 结果文案。</summary>
+    [ObservableProperty]
+    private string _compactionStatus =
+        "把今天之前的按键明细合并成「每天每个键按了几次」，数据库会小很多，统计次数不受影响。";
+
+    [ObservableProperty]
+    private bool _isCompacting;
 
     public SettingsViewModel(IConfigurationService config, IStartupService startup)
     {
@@ -99,14 +89,70 @@ public partial class SettingsViewModel : ViewModelBase
             ? 1
             : 0;
         _isAutoStartMonitoring = config.GetAutoStartMonitoring();
-        _showThousandsSeparator = config.GetShowThousandsSeparator();
-        _compactSmallNumbers = config.GetCompactSmallNumbers();
-        NumberFormatService.SetCompactSmall(_compactSmallNumbers);
     }
 
     [RelayCommand]
     private void OpenDataFolder() => OpenFolder(DataFolder);
 
+    [RelayCommand]
+    private async System.Threading.Tasks.Task CompactHistoryAsync()
+    {
+        if (IsCompacting)
+            return;
+
+        var answer = System.Windows.MessageBox.Show(
+            "将把今天之前的按键明细合并为按天汇总：\n\n"
+                + "• 只保留「某天某个键按了几次」，具体时间点不再保存\n"
+                + "• 各项统计与热力图的次数不受影响\n"
+                + "• 已经压缩过的日期不会重复处理\n\n"
+                + "是否继续？",
+            "压缩历史数据",
+            System.Windows.MessageBoxButton.OKCancel,
+            System.Windows.MessageBoxImage.Question
+        );
+        if (answer != System.Windows.MessageBoxResult.OK)
+            return;
+
+        IsCompacting = true;
+        CompactionStatus = "正在压缩…";
+        try
+        {
+            var result = await System.Threading.Tasks.Task.Run(() =>
+                DataCompactionService.Compact(msg =>
+                {
+                    var app = System.Windows.Application.Current;
+                    if (app is null)
+                        return;
+                    app.Dispatcher.BeginInvoke(() => CompactionStatus = msg);
+                })
+            );
+
+            CompactionStatus = result.HasChanges
+                ? $"已压缩 {result.DaysCompacted} 天，合并 {result.RecordsRemoved:N0} 条明细；"
+                    + $"数据文件 {FormatSize(result.BytesBefore)} → {FormatSize(result.BytesAfter)}"
+                    + $"（省了 {FormatSize(result.BytesSaved)}）。"
+                : result.Message;
+        }
+        catch (Exception ex)
+        {
+            CompactionStatus = "压缩失败：" + ex.Message;
+        }
+        finally
+        {
+            IsCompacting = false;
+        }
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes >= 1024L * 1024 * 1024)
+            return $"{bytes / 1024d / 1024 / 1024:0.##} GB";
+        if (bytes >= 1024L * 1024)
+            return $"{bytes / 1024d / 1024:0.##} MB";
+        if (bytes >= 1024)
+            return $"{bytes / 1024d:0.#} KB";
+        return $"{bytes} B";
+    }
     [RelayCommand]
     private void OpenLogFolder() => OpenFolder(Path.Combine(DataFolder, "logs"));
 

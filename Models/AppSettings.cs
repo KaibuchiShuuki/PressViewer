@@ -31,13 +31,14 @@ public class GeneralSettings
 public class AppearanceSettings
 {
     /// <summary>主题色名称，见 ThemeService.Palettes。</summary>
-    public string Theme { get; set; } = "Pink";
+    public string Theme { get; set; } = "MintSoda";
 
     public bool DarkMode { get; set; }
 
-    /// <summary>数字是否加千分位（1,145）。</summary>
-    public bool ShowThousandsSeparator { get; set; } = true;
-
-    /// <summary>小面积按键（滚轮、肩键、ABXY 等）次数超过 999 时用 K/M 缩写。</summary>
-    public bool CompactSmallNumbers { get; set; } = true;
+    /// <summary>
+    /// 手柄热力图样式：Form = 手柄形（带手柄轮廓、写实质感），
+    /// Tile = 键帽式（把按键排成大键帽分区）。见 GamepadLayoutService。
+    /// 1.1.1 起固定用 Tile、设置页不再提供切换，这里只保留字段给以后恢复用。
+    /// </summary>
+    public string GamepadLayout { get; set; } = "Tile";
 }

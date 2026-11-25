@@ -96,21 +96,7 @@ public class ConfigurationService : IConfigurationService
         Save();
     }
 
-    public bool GetShowThousandsSeparator() => _appSettings.Appearance.ShowThousandsSeparator;
-
-    public bool GetCompactSmallNumbers() => _appSettings.Appearance.CompactSmallNumbers;
-
-    public void SetCompactSmallNumbers(bool enabled)
-    {
-        _appSettings.Appearance.CompactSmallNumbers = enabled;
-        Save();
-    }
-
-    public void SetShowThousandsSeparator(bool show)
-    {
-        _appSettings.Appearance.ShowThousandsSeparator = show;
-        Save();
-    }
+    public string GetGamepadLayout() => _appSettings.Appearance.GamepadLayout;
 
     // ---------- 行为 ----------
     public string GetCloseAction() => _appSettings.General.CloseAction;

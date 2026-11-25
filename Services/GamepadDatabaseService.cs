@@ -24,13 +24,25 @@ public class GamepadDatabaseService : IGamepadDatabaseService
         using var connection = new SqliteConnection(ConnectionString);
         connection.Open();
         var cmd = connection.CreateCommand();
+        // GamepadPressDaily / CompactedDays 供「压缩历史数据」使用：老记录按天汇总后明细删除。
         cmd.CommandText =
             @"
             CREATE TABLE IF NOT EXISTS GamepadPressRecords (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Button TEXT NOT NULL,
                 PressTime TEXT NOT NULL
-            );";
+            );
+            CREATE TABLE IF NOT EXISTS GamepadPressDaily (
+                Button TEXT NOT NULL,
+                Day TEXT NOT NULL,
+                Count INTEGER NOT NULL,
+                PRIMARY KEY (Button, Day)
+            );
+            CREATE TABLE IF NOT EXISTS CompactedDays (
+                Day TEXT PRIMARY KEY,
+                CompactedAt TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS IX_GamepadPressRecords_Time ON GamepadPressRecords(PressTime);";
         cmd.ExecuteNonQuery();
     }
 
@@ -47,6 +59,7 @@ public class GamepadDatabaseService : IGamepadDatabaseService
 
     public Dictionary<string, int> GetPressCounts() => GetPressCounts(null, null);
 
+    /// <summary>按范围统计每个手柄键的次数。明细与按天汇总两边相加，压缩过历史数据也能算对。</summary>
     public Dictionary<string, int> GetPressCounts(DateTime? from, DateTime? to)
     {
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -55,8 +68,8 @@ public class GamepadDatabaseService : IGamepadDatabaseService
 
         using var connection = new SqliteConnection(ConnectionString);
         connection.Open();
-        var cmd = connection.CreateCommand();
 
+        var cmd = connection.CreateCommand();
         if (from.HasValue && to.HasValue)
         {
             cmd.CommandText =
@@ -73,9 +86,39 @@ public class GamepadDatabaseService : IGamepadDatabaseService
             cmd.CommandText = "SELECT Button, COUNT(*) FROM GamepadPressRecords GROUP BY Button";
         }
 
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
-            counts[reader.GetString(0)] = reader.GetInt32(1);
+        using (var reader = cmd.ExecuteReader())
+        {
+            while (reader.Read())
+                counts[reader.GetString(0)] = reader.GetInt32(1);
+        }
+
+        var daily = connection.CreateCommand();
+        if (from.HasValue && to.HasValue)
+        {
+            daily.CommandText =
+                @"
+                SELECT Button, SUM(Count)
+                FROM GamepadPressDaily
+                WHERE Day >= @fromDay AND Day < @toDay
+                GROUP BY Button";
+            daily.Parameters.AddWithValue("@fromDay", from.Value.ToString("yyyy-MM-dd"));
+            daily.Parameters.AddWithValue("@toDay", to.Value.ToString("yyyy-MM-dd"));
+        }
+        else
+        {
+            daily.CommandText = "SELECT Button, SUM(Count) FROM GamepadPressDaily GROUP BY Button";
+        }
+
+        using (var reader = daily.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                string button = reader.GetString(0);
+                int value = (int)reader.GetInt64(1);
+                counts[button] = counts.TryGetValue(button, out int old) ? old + value : value;
+            }
+        }
+
         return counts;
     }
 }

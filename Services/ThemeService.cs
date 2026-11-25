@@ -32,25 +32,25 @@ public static class ThemeService
 {
     public static IReadOnlyList<ThemePalette> Palettes { get; } = new[]
     {
-        new ThemePalette("Pink", "樱花轻语", C("#E8559A"), C("#C23A78"), new[] { C("#FFE3C8"), C("#F26AA8"), C("#8E1F6B") }),
+        new ThemePalette("MintSoda", "薄荷汽水", C("#3ECFB2"), C("#12816E"), new[] { C("#D6FFF4"), C("#3ED8C0"), C("#0B6B5E") }),
         new ThemePalette("Aurora", "极光幻彩", C("#6C5CE7"), C("#3A2E9E"), new[] { C("#7BE0FF"), C("#B388FF"), C("#FF6FD8"), C("#6C5CE7") }),
         new ThemePalette("DeepSea", "深海蓝调", C("#1E88E5"), C("#0D47A1"), new[] { C("#9FE8F5"), C("#38A3E0"), C("#0B2E59") }),
         new ThemePalette("Sunset", "落日熔金", C("#FF7043"), C("#C0392B"), new[] { C("#FFE08A"), C("#FF8A3D"), C("#B3241C") }),
         new ThemePalette("Forest", "森林秘语", C("#2E9E5B"), C("#14532D"), new[] { C("#D8F3B8"), C("#4CAF50"), C("#0B3D2E") }),
         new ThemePalette("Champagne", "香槟鎏金", C("#C9A227"), C("#8A6D1D"), new[] { C("#FFF3C4"), C("#E6C65C"), C("#7A5A12") }),
-        new ThemePalette("Lavender", "薰衣草梦境", C("#9C7BF0"), C("#5B3FA8"), new[] { C("#E9DCFF"), C("#A98BF5"), C("#4A2C8F") }),
-        new ThemePalette("MintSoda", "薄荷汽水", C("#3ECFB2"), C("#12816E"), new[] { C("#D6FFF4"), C("#3ED8C0"), C("#0B6B5E") }),
+        new ThemePalette("Lavender", "薰衣梦境", C("#9C7BF0"), C("#5B3FA8"), new[] { C("#E9DCFF"), C("#A98BF5"), C("#4A2C8F") }),
+        new ThemePalette("Pink", "樱花轻语", C("#E8559A"), C("#C23A78"), new[] { C("#FFE3C8"), C("#F26AA8"), C("#8E1F6B") }),
         new ThemePalette("Cyan", "青碧如洗", C("#06B6D4"), C("#0E7490"), new[] { C("#CFF5FF"), C("#22B6D1"), C("#0A4E70") }),
         new ThemePalette("Coral", "珊瑚晚霞", C("#EF4444"), C("#B91C1C"), new[] { C("#FFD9A8"), C("#FF6B4A"), C("#8E0F2E") }),
         new ThemePalette("Graphite", "石墨夜色", C("#6B7280"), C("#374151"),
             new[] { C("#DDE3EC"), C("#7E8798"), C("#1F2530") },
             new[] { C("#39404D"), C("#8B94A3"), C("#C2C9D4") }),
-        new ThemePalette("Rainbow", "霓虹虹光", C("#FF4D6D"), C("#B3122E"),
+        new ThemePalette("Rainbow", "七彩虹光", C("#FF4D6D"), C("#B3122E"),
             new[] { C("#FF3B3B"), C("#FF3B3B"), C("#FF7A45"), C("#FFB347"), C("#FFE066"), C("#7CE38B"), C("#66E0F0"), C("#7C96FF"), C("#C9A7FF") },
             new[] { C("#FF6B6B"), C("#FF6B6B"), C("#FF8A5C"), C("#FFB866"), C("#FFE066"), C("#7CE38B"), C("#66E0F0"), C("#7C96FF"), C("#C9A7FF") }),
     };
 
-    public static string CurrentTheme { get; private set; } = "Pink";
+    public static string CurrentTheme { get; private set; } = "MintSoda";
 
     public static bool IsDark { get; private set; }
 
@@ -150,7 +150,7 @@ public static class ThemeService
 
     public static void Apply(string themeName, bool dark)
     {
-        CurrentTheme = Palettes.Any(p => p.Name == themeName) ? themeName : "Pink";
+        CurrentTheme = Palettes.Any(p => p.Name == themeName) ? themeName : "MintSoda";
         IsDark = dark;
 
         var res = Application.Current?.Resources;

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
+using System.Runtime.InteropServices;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Timer = System.Threading.Timer;
@@ -15,7 +16,39 @@ public sealed class ProcessUsageTracker : IDisposable
     private const string DbFile = "app_usage.db";
     private const double MinimumSessionSeconds = 1.0;
     private const double PendingProcessTimeoutSeconds = 3.0;
+
+    /// <summary>无输入超过这个秒数就认为人离开了，软件时长不再累计。</summary>
+    private const long IdleThresholdSeconds = 600;
+
     private bool _isStopped;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LASTINPUTINFO
+    {
+        public uint cbSize;
+        public uint dwTime;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+    /// <summary>距离最后一次键盘/鼠标输入过了多少秒；取不到时按「在用」处理。</summary>
+    private static long UserIdleSeconds()
+    {
+        try
+        {
+            var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+            if (!GetLastInputInfo(ref info))
+                return 0;
+            // dwTime 是 32 位系统运行毫秒，减出来会回绕，所以用 unchecked 的差值
+            var idleMs = unchecked((uint)Environment.TickCount - info.dwTime);
+            return idleMs / 1000;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
 
     private readonly ConcurrentDictionary<string, AppSessionState> _appSessions = new(
         StringComparer.OrdinalIgnoreCase
@@ -665,11 +698,19 @@ public sealed class ProcessUsageTracker : IDisposable
     private void AccumulateRunningSessions()
     {
         var now = DateTime.Now;
+        // 人不在电脑前时不计入软件使用时长；但时间戳要推到现在，
+        // 否则回来那一刻会把整段离开的时间一次性补进累计值。
+        var idle = UserIdleSeconds() >= IdleThresholdSeconds;
         foreach (var kvp in _appSessions)
         {
             var state = kvp.Value;
             if (state.ProcessCount <= 0)
                 continue;
+            if (idle)
+            {
+                state.LastUpdateTime = now;
+                continue;
+            }
             double delta = (now - state.LastUpdateTime).TotalSeconds;
             if (delta > 0)
             {
