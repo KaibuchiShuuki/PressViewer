@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text;
 using Microsoft.Data.Sqlite;
@@ -9,10 +8,13 @@ namespace PressViewer.Service;
 public class UsageTrackingService : BackgroundService
 {
     private readonly ILogger<UsageTrackingService> _logger;
-    private readonly Stopwatch _stopwatch = new();
     private long _todaySeconds;
     private DateTime _todayDate;
     private bool _isRunning;
+
+    /// <summary>上一段落盘时的墙钟时刻，用它算这一段的真实跨度。</summary>
+    private DateTime _lastTickUtc = DateTime.UtcNow;
+
     private readonly object _lock = new(); // 线程同步锁
     private const string DbFile = "pc_usage.db";
     private const string LegacyDbPath = @"C:\ProgramData\XAssistant\UsageTracker\pc_usage.db";
@@ -37,6 +39,16 @@ public class UsageTrackingService : BackgroundService
 
     /// <summary>无键盘/鼠标输入超过这个秒数就认为人不在电脑前，暂停计时。</summary>
     private const long IdleThresholdSeconds = 600;
+
+    /// <summary>
+    /// 单次落盘允许的最大墙钟跨度。定时保存是 7 秒一次，超过这个值说明进程被冻结过
+    /// （休眠 / 待机 / 被反作弊暂停 / 系统时间被改），这段空档不能算成使用时长。
+    /// 2026-11-28 实测：合盖三天后再开机，Stopwatch 把 66 小时全记了进去。
+    /// </summary>
+    private const int MaxTickDriftSeconds = 30;
+
+    /// <summary>一天最多 24 小时，超过一定是异常累计，直接截断。</summary>
+    private const long MaxDailySeconds = 86400;
 
     private volatile bool _isIdle;
 
@@ -94,7 +106,15 @@ public class UsageTrackingService : BackgroundService
     {
         lock (_lock)
         {
-            return _todaySeconds + (_isRunning ? (long)_stopwatch.Elapsed.TotalSeconds : 0);
+            if (!_isRunning)
+                return _todaySeconds;
+
+            // 用墙钟差而不是秒表：秒表在系统休眠期间照走，墙钟差可以做异常判断
+            var drift = (DateTime.UtcNow - _lastTickUtc).TotalSeconds;
+            if (drift <= 0 || drift > MaxTickDriftSeconds)
+                return _todaySeconds;
+
+            return _todaySeconds + (long)drift;
         }
     }
 
@@ -104,7 +124,7 @@ public class UsageTrackingService : BackgroundService
         {
             if (!_isRunning)
             {
-                _stopwatch.Start();
+                _lastTickUtc = DateTime.UtcNow;
                 _isRunning = true;
                 _logger.LogInformation("Session started.");
             }
@@ -115,16 +135,55 @@ public class UsageTrackingService : BackgroundService
     {
         lock (_lock)
         {
-            if (_isRunning)
+            if (!_isRunning)
+                return;
+
+            var now = DateTime.UtcNow;
+            var drift = (now - _lastTickUtc).TotalSeconds;
+            _lastTickUtc = now;
+            _isRunning = false;
+
+            // 休眠 / 冻结后恢复时墙钟差会远大于保存周期，这段人不在电脑前，丢掉
+            if (drift <= 0 || drift > MaxTickDriftSeconds)
             {
-                var elapsed = _stopwatch.Elapsed;
-                _stopwatch.Stop();
-                _todaySeconds += (long)elapsed.TotalSeconds;
-                SaveTodaySeconds(_todaySeconds);
-                _stopwatch.Reset();
-                _isRunning = false;
+                if (drift > MaxTickDriftSeconds)
+                {
+                    _logger.LogWarning(
+                        "跳过一段 {Minutes:F0} 分钟的时间跳变（休眠或进程被冻结），不计入使用时长",
+                        drift / 60
+                    );
+                }
+
+                return;
             }
+
+            AccumulateSeconds(drift);
         }
+    }
+
+    /// <summary>把一段时长累加到当天；跨天先切到新日期，单日封顶 24 小时。</summary>
+    private void AccumulateSeconds(double seconds)
+    {
+        var today = DateTime.Today;
+        if (_todayDate != today)
+        {
+            _todayDate = today;
+            _todaySeconds = LoadTodaySeconds();
+        }
+
+        var add = (long)Math.Round(seconds);
+        if (add <= 0)
+            return;
+
+        var target = _todaySeconds + add;
+        if (target > MaxDailySeconds)
+        {
+            _logger.LogWarning("当日累计超过 24 小时（{Seconds}s），已截断到上限", target);
+            target = MaxDailySeconds;
+        }
+
+        _todaySeconds = target;
+        SaveTodaySeconds(_todaySeconds);
     }
 
     private volatile bool _isSuspended;
@@ -161,8 +220,7 @@ public class UsageTrackingService : BackgroundService
                 _todayDate = today;
                 _todaySeconds = LoadTodaySeconds(); // 新一天的初始值
                 _logger.LogInformation("Day rolled over, loaded: {Seconds}s", _todaySeconds);
-            }
-        }
+            }        }
     }
 
     private void SaveTodaySeconds(long seconds)
@@ -312,7 +370,9 @@ public class UsageTrackingService : BackgroundService
         cmd.CommandText = "SELECT Seconds FROM DailyUsage WHERE Date = $date";
         cmd.Parameters.AddWithValue("$date", DateTime.Today.ToString("yyyy-MM-dd"));
         var result = cmd.ExecuteScalar();
-        return result is long sec ? sec : 0;
+        var seconds = result is long sec ? sec : 0;
+        // 旧版本可能写进过超过一天的脏值，读进来先压回合法范围
+        return Math.Clamp(seconds, 0, MaxDailySeconds);
     }
 
     /// <summary>

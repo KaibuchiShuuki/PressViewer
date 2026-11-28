@@ -62,7 +62,7 @@ public class StartupService : IStartupService
     private const int TriggerTypeLogon = 9;
     private const int ActionTypeExec = 0;
     private const int LogonTypeInteractiveToken = 3; // 只用当前用户的登录令牌，不存密码
-    private const int RunLevelLeastPrivilege = 0; // 不弹 UAC
+    private const int RunLevelHighest = 1; // 最高权限：程序 manifest 要求管理员，任务也必须用最高权限才不弹 UAC
     private const int CreateOrUpdate = 6;
     private const int InstancesIgnoreNew = 2; // 已经在跑就不要再起一个
     private const int HResultFileNotFound = unchecked((int)0x80070002);
@@ -95,6 +95,40 @@ public class StartupService : IStartupService
 
     /// <summary>计划任务这一路是否已注册（部署脚本拿它当验收判据，界面上不显示）。</summary>
     public bool IsLogonTaskRegistered() => TaskExists();
+
+    /// <summary>
+    /// 1.1.1 起主程序带 requireAdministrator 清单，登录任务必须用最高权限运行，
+    /// 否则任务拉起时会被 UAC 拦住、开机后根本没有程序在跑。
+    /// 老用户的任务还是「普通权限」，这里检查一次并原地升级。
+    /// </summary>
+    public void EnsureHighestPrivilegeTask()
+    {
+        if (!TaskExists())
+            return;
+
+        try
+        {
+            int runLevel = -1;
+            WithTaskService(service =>
+            {
+                dynamic root = service.GetFolder("\\");
+                dynamic task = root.GetTask(_appName);
+                if (task is not null)
+                    runLevel = (int)task.Definition.Principal.RunLevel;
+            });
+
+            if (runLevel == RunLevelHighest)
+                return;
+
+            Serilog.Log.Information("登录计划任务还是普通权限，正在升级为最高权限…");
+            RegisterLogonTask();
+            Serilog.Log.Information("登录计划任务已升级为最高权限");
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "升级登录计划任务的权限失败");
+        }
+    }
 
     public void SetAutoStart(bool enabled)
     {
@@ -190,7 +224,7 @@ public class StartupService : IStartupService
                 dynamic principal = def.Principal;
                 principal.UserId = CurrentUser;
                 principal.LogonType = LogonTypeInteractiveToken;
-                principal.RunLevel = RunLevelLeastPrivilege;
+                principal.RunLevel = RunLevelHighest;
 
                 // 设置。前三项是踩过坑才这么定的，别随手改：
                 //   ExecutionTimeLimit = PT0S  不限时。默认是 72 小时 —— 常驻应用会在第三天

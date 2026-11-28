@@ -9,6 +9,8 @@
     <AssemblyName>PressViewer</AssemblyName>
     <RootNamespace>PressViewer</RootNamespace>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
+    <!-- 提权清单：低层钩子收不到管理员进程（游戏）的输入，详见 app.manifest 里的说明 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- 可做大小比较的语义化版本；SDK 会把 git sha 接在 ProductVersion 后面 -->
     <Version>1.1.1</Version>
     <Product>PressViewer</Product>

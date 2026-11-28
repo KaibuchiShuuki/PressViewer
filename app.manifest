@@ -5,6 +5,19 @@
        For more details visit https://learn.microsoft.com/en-us/windows/win32/sbscs/application-manifests -->
   <assemblyIdentity version="1.0.0.0" name="PressViewer.Desktop"/>
 
+  <!-- 必须以管理员身份运行。
+       低层键鼠钩子（WH_KEYBOARD_LL / WH_MOUSE_LL）受 UIPI 限制：普通权限进程收不到
+       更高权限进程的输入。绝区零等游戏的可执行文件 manifest 里写的是
+       requestedExecutionLevel="requireAdministrator"（2026-11-28 实测确认），
+       所以不把本程序提权，游戏内就完全记录不到。 -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
       <!-- A list of the Windows versions that this application has been tested on

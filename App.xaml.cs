@@ -197,6 +197,13 @@ public partial class App : System.Windows.Application
             );
         }
 
+        // 1.1.1 起主程序要管理员权限才能收到提权游戏（绝区零等）的输入，
+        // 登录任务也得跟着改成最高权限，否则开机拉起会被 UAC 挡住
+        if (startup.IsStartWithWindowsEnabled())
+        {
+            startup.EnsureHighestPrivilegeTask();
+        }
+
         // 采集不能依赖用户是否访问过统计页：这两个 VM 的构造就是钩子的启动点。
         // 显式解析一次，保证即使主窗没显示 / 从未点开统计页，采集也已经装上。
         var config = provider.GetRequiredService<IConfigurationService>();
