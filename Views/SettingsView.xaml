@@ -132,6 +132,22 @@
             Content="启动时自动开始监测"
             IsChecked="{Binding IsAutoStartMonitoring, Mode=TwoWay}" />
           <TextBlock Style="{StaticResource SettingHint}" Text="关闭后启动只统计不使用；之后在对应页面点「开始记录」仍可手动开启。" />
+
+          <Separator Margin="0,18,0,14" />
+
+          <TextBlock Style="{StaticResource SettingLabel}" Text="桌面快捷方式" />
+          <TextBlock
+            Margin="0,4,0,10"
+            FontSize="12.5"
+            LineHeight="19"
+            Foreground="{DynamicResource SubInkBrush}"
+            Text="{Binding ShortcutStatus}"
+            TextWrapping="Wrap" />
+          <Button
+            HorizontalAlignment="Left"
+            MinWidth="150"
+            Command="{Binding CreateDesktopShortcutCommand}"
+            Content="在桌面创建快捷方式" />
         </StackPanel>
       </Border>
 

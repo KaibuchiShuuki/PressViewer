@@ -22,10 +22,12 @@
 
 ## 运行权限（1.1.2 起）
 
-- `app.manifest` 里写的是 `requestedExecutionLevel level="requireAdministrator"`。**不要改回 asInvoker**：低层键鼠钩子（`WH_KEYBOARD_LL` / `WH_MOUSE_LL`）受 UIPI 限制，普通权限进程收不到更高权限进程的输入，而《绝区零》《原神》这类游戏的可执行文件自身就是 `requireAdministrator`，不提权就完全记录不到游戏内的按键。
-- 因为主程序要管理员权限，登录计划任务必须用**最高权限**（`StartupService.RunLevelHighest = 1`）。若任务仍是普通权限，登录拉起时会被 UAC 拦住，表现为"开机后没有程序在跑"。`StartupService.EnsureHighestPrivilegeTask()` 会在启动时检查并原地升级旧任务。
-- 手动双击 exe 会弹一次 UAC，这是提权的固有代价；走计划任务自启不弹。
-- 排查"游戏里记录不到"时先看 exe 的清单：`[Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($exe))` 里搜 `requestedExecutionLevel`。
+- **记录管理员进程的输入**（《绝区零》《原神》等，它们的 exe 自身声明了 `requireAdministrator`）受 UIPI 限制，普通权限的键鼠钩子收不到。所以程序最终必须以管理员身份运行，这一点不能省。
+- 但 `app.manifest` 写的是 `requestedExecutionLevel level="asInvoker"`，**不要再改回 requireAdministrator**：manifest 里声明提权会让桌面快捷方式被 Windows 自动叠加 UAC 盾徽，观感差。现在的做法是普通权限启动 → `App.OnStartup` 里 `ElevationService.RelaunchElevated()` 用 `ShellExecuteEx(runas)` 重启自己 → 原进程退出。改 manifest 之前先读这一节和 `Services/ElevationService.cs` 的注释。
+- 因为主程序最终是管理员权限，登录计划任务必须用**最高权限**（`StartupService.RunLevelHighest = 1`），否则登录拉起时会被 UAC 拦住，表现为"开机后没有程序在跑"。`StartupService.EnsureHighestPrivilegeTask()` 会在启动时检查并原地升级旧任务。走计划任务启动时进程已经是管理员，不会触发那次 runas，所以开机不弹 UAC。
+- 手动双击 exe 会弹一次 UAC（先以普通权限起、再提权），这是绕开盾徽的代价。
+- 桌面快捷方式由「设置 → 行为 → 桌面快捷方式」生成，指向 exe 本身、图标取 `exe,0`，因为是 asInvoker 所以不带盾徽。
+- 排查"游戏里记录不到"时先看那个 exe 的清单：`[Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($exe))` 里搜 `requestedExecutionLevel`。
 
 ## 上传 GitHub 前必须确认
 

@@ -78,6 +78,28 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // 程序本体以普通权限运行（这样桌面快捷方式不会被 Windows 加 UAC 盾徽），
+        // 启动后第一件事申请提权。开机自启走的是「最高权限」计划任务，
+        // 进程起来时已经是管理员，这里会直接跳过，不会弹提示。
+        if (!ElevationService.IsElevated)
+        {
+            if (ElevationService.RelaunchElevated(e.Args))
+            {
+                Shutdown();
+                return;
+            }
+
+            System.Windows.MessageBox.Show(
+                "PressViewer 需要管理员权限，才能记录管理员进程（例如游戏）里的按键。\n"
+                    + "请在弹出的权限提示里选择「是」。",
+                "PressViewer",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning
+            );
+            Shutdown(1);
+            return;
+        }
+
         // 单实例保护，放在一切装配之前：两个实例会把同一次按键各记一遍。
         bool silentLaunch = e.Args.Any(a =>
             string.Equals(a, StartupService.SilentArgument, StringComparison.OrdinalIgnoreCase)

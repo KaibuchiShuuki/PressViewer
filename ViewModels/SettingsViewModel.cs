@@ -153,6 +153,61 @@ public partial class SettingsViewModel : ViewModelBase
             return $"{bytes / 1024d:0.#} KB";
         return $"{bytes} B";
     }
+
+    /// <summary>创建桌面快捷方式的结果文案。</summary>
+    [ObservableProperty]
+    private string _shortcutStatus =
+        "在桌面放一个带图标的快捷方式，双击直接打开界面；程序启动后会自己申请管理员权限。";
+
+    [RelayCommand]
+    private void CreateDesktopShortcut()
+    {
+        try
+        {
+            string? desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            if (string.IsNullOrEmpty(desktop) || !Directory.Exists(desktop))
+            {
+                ShortcutStatus = "找不到桌面目录，创建失败。";
+                return;
+            }
+
+            string exe =
+                Environment.ProcessPath
+                ?? Process.GetCurrentProcess().MainModule?.FileName
+                ?? string.Empty;
+            if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
+            {
+                ShortcutStatus = "找不到程序自身的位置，创建失败。";
+                return;
+            }
+
+            string linkPath = Path.Combine(desktop, "PressViewer.lnk");
+            var shellType = Type.GetTypeFromProgID("WScript.Shell");
+            if (shellType is null)
+            {
+                ShortcutStatus = "系统缺少 WScript.Shell，创建失败。";
+                return;
+            }
+
+            dynamic shell = Activator.CreateInstance(shellType)!;
+            dynamic shortcut = shell.CreateShortcut(linkPath);
+            shortcut.TargetPath = exe;
+            shortcut.WorkingDirectory = Path.GetDirectoryName(exe) ?? string.Empty;
+            shortcut.IconLocation = exe + ",0";
+            shortcut.Description = "PressViewer — 输入与使用统计";
+            shortcut.WindowStyle = 1;
+            shortcut.Save();
+
+            ShortcutStatus = File.Exists(linkPath)
+                ? "已在桌面创建快捷方式。"
+                : "创建失败，桌面上没有生成文件。";
+        }
+        catch (Exception ex)
+        {
+            ShortcutStatus = "创建失败：" + ex.Message;
+        }
+    }
+
     [RelayCommand]
     private void OpenLogFolder() => OpenFolder(Path.Combine(DataFolder, "logs"));
 
