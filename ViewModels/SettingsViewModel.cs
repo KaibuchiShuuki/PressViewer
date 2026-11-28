@@ -157,8 +157,15 @@ public partial class SettingsViewModel : ViewModelBase
     /// <summary>创建桌面快捷方式的结果文案。</summary>
     [ObservableProperty]
     private string _shortcutStatus =
-        "在桌面放一个带图标的快捷方式，双击直接打开界面；程序启动后会自己申请管理员权限。";
+        "在桌面放一个带图标的快捷方式，双击直接打开界面（程序需要管理员权限，会照常提权）。";
 
+    /// <summary>
+    /// 生成桌面快捷方式。
+    ///
+    /// 快捷方式的目标不直接写 PressViewer.exe：那个 exe 的 manifest 是 requireAdministrator，
+    /// Explorer 会给这种目标叠一层 UAC 盾徽。改成写 powershell.exe（隐藏窗口）再由它
+    /// Start-Process -Verb RunAs 拉起主程序，目标本身不要求提权，图标就干净了。
+    /// </summary>
     [RelayCommand]
     private void CreateDesktopShortcut()
     {
@@ -189,9 +196,21 @@ public partial class SettingsViewModel : ViewModelBase
                 return;
             }
 
+            string powershell = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                @"WindowsPowerShell\v1.0\powershell.exe"
+            );
+            // 单引号里再嵌一层单引号，PowerShell 用 '' 转义
+            string escapedExe = exe.Replace("'", "''");
+            string arguments =
+                "-NoProfile -WindowStyle Hidden -Command \"Start-Process -FilePath '"
+                + escapedExe
+                + "' -Verb RunAs\"";
+
             dynamic shell = Activator.CreateInstance(shellType)!;
             dynamic shortcut = shell.CreateShortcut(linkPath);
-            shortcut.TargetPath = exe;
+            shortcut.TargetPath = File.Exists(powershell) ? powershell : exe;
+            shortcut.Arguments = File.Exists(powershell) ? arguments : string.Empty;
             shortcut.WorkingDirectory = Path.GetDirectoryName(exe) ?? string.Empty;
             shortcut.IconLocation = exe + ",0";
             shortcut.Description = "PressViewer — 输入与使用统计";

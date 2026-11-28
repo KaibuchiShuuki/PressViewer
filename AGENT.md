@@ -22,12 +22,11 @@
 
 ## 运行权限（1.1.2 起）
 
-- **记录管理员进程的输入**（《绝区零》《原神》等，它们的 exe 自身声明了 `requireAdministrator`）受 UIPI 限制，普通权限的键鼠钩子收不到。所以程序最终必须以管理员身份运行，这一点不能省。
-- 但 `app.manifest` 写的是 `requestedExecutionLevel level="asInvoker"`，**不要再改回 requireAdministrator**：manifest 里声明提权会让桌面快捷方式被 Windows 自动叠加 UAC 盾徽，观感差。现在的做法是普通权限启动 → `App.OnStartup` 里 `ElevationService.RelaunchElevated()` 用 `ShellExecuteEx(runas)` 重启自己 → 原进程退出。改 manifest 之前先读这一节和 `Services/ElevationService.cs` 的注释。
-- 因为主程序最终是管理员权限，登录计划任务必须用**最高权限**（`StartupService.RunLevelHighest = 1`），否则登录拉起时会被 UAC 拦住，表现为"开机后没有程序在跑"。`StartupService.EnsureHighestPrivilegeTask()` 会在启动时检查并原地升级旧任务。走计划任务启动时进程已经是管理员，不会触发那次 runas，所以开机不弹 UAC。
-- 手动双击 exe 会弹一次 UAC（先以普通权限起、再提权），这是绕开盾徽的代价。
-- 桌面快捷方式由「设置 → 行为 → 桌面快捷方式」生成，指向 exe 本身、图标取 `exe,0`，因为是 asInvoker 所以不带盾徽。
-- 排查"游戏里记录不到"时先看那个 exe 的清单：`[Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($exe))` 里搜 `requestedExecutionLevel`。
+- `app.manifest` 里写的是 `requestedExecutionLevel level="requireAdministrator"`。**不要改回 asInvoker**：低层键鼠钩子（`WH_KEYBOARD_LL` / `WH_MOUSE_LL`）受 UIPI 限制，普通权限进程收不到更高权限进程的输入，而《绝区零》《原神》这类游戏的可执行文件自身就是 `requireAdministrator`，不提权就完全记录不到游戏内的按键。
+- 因为主程序要管理员权限，登录计划任务必须用**最高权限**（`StartupService.RunLevelHighest = 1`）。若任务仍是普通权限，登录拉起时会被 UAC 拦住，表现为"开机后没有程序在跑"。`StartupService.EnsureHighestPrivilegeTask()` 会在启动时检查并原地升级旧任务。
+- 手动双击 exe 会弹一次 UAC，这是提权的固有代价；走计划任务自启不弹。
+- **桌面快捷方式不带 UAC 盾徽的办法**：`SettingsViewModel.CreateDesktopShortcut` 把快捷方式的目标写成 `powershell.exe`（`-WindowStyle Hidden`），参数是 `Start-Process -FilePath '<exe>' -Verb RunAs`，图标仍取 `exe,0`。Explorer 的盾徽是按"目标文件的 manifest"叠的，目标不是提权 exe 就不会画盾。**不要**图省事把 TargetPath 直接写成 PressViewer.exe，那样盾徽会回来。
+- 排查"游戏里记录不到"时先看 exe 的清单：`[Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($exe))` 里搜 `requestedExecutionLevel`。
 
 ## 上传 GitHub 前必须确认
 
@@ -42,7 +41,8 @@
    确认没有数据库、日志、截图混进来。
 
 4. 截图、设计稿与临时发布目录不要放进仓库：`designs/`、`*-shot.png`、`*-publish*/`、`pv-*`、`q-*` 都已写进 `.gitignore`，本地留着方便对照，但不入库。
-5. 发布二进制走 GitHub Releases：从 `app/` 打包，排除 `data/` 与 `*.pdb`，zip 内顶层是 `PressViewer/` 目录；上传后回读 release 确认中文正文没有乱码（提交 JSON 时用 UTF-8 字节数组，别让 PowerShell 按 ANSI 编码发出去）。
+5. 发布二进制走 GitHub Releases：直接跑 `tools\release.ps1`（publish 主程序与服务 → 打包 `PressViewer-<版本>-win-x64.zip` → 创建 Release 并上传），脚本从 `git credential fill` 取 token，正文按 UTF-8 字节数组提交，不会有中文乱码。也可以手工打包，规则是：从 `app/` 取，排除 `data/` 与 `*.pdb`，zip 内顶层是 `PressViewer/` 目录；上传后回读 release 确认中文正文没有乱码。
+6. 发布前先退出正在运行的 PressViewer，否则 `app/PressViewer.dll` 被占用，publish 会失败（程序以管理员权限运行，普通权限结束不掉）。
 
 ## 构建与发布
 
