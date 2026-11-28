@@ -220,10 +220,12 @@ public partial class SettingsViewModel : ViewModelBase
             ShortcutStatus = File.Exists(linkPath)
                 ? "已在桌面创建快捷方式。"
                 : "创建失败，桌面上没有生成文件。";
+            Serilog.Log.Information("桌面快捷方式：{0} → {1}", linkPath, ShortcutStatus);
         }
         catch (Exception ex)
         {
             ShortcutStatus = "创建失败：" + ex.Message;
+            Serilog.Log.Error(ex, "创建桌面快捷方式失败");
         }
     }
 
