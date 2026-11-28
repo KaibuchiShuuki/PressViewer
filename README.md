@@ -37,11 +37,13 @@
 
 ## 下载与运行
 
-1. 到 [Releases](https://github.com/KaibuchiShuuki/PressViewer/releases/latest) 下载 `PressViewer-1.1.1-win-x64.zip`（自包含 .NET 10，不需要额外安装运行时）。
+1. 到 [Releases](https://github.com/KaibuchiShuuki/PressViewer/releases/latest) 下载 `PressViewer-1.1.2-win-x64.zip`（自包含 .NET 10，不需要额外安装运行时）。
 2. 解压到任意目录（例如 `D:\soft\PressViewer`）。
-3. 运行 `PressViewer.exe`。首次启动会在程序目录下创建 `data/`，并从旧版本（XAssistant / PressViewer）的 `%APPDATA%` 复制已有记录。
+3. 运行 `PressViewer.exe`。**程序需要管理员权限**，启动时会出现一次 UAC 提示；同意后首次启动会在程序目录下创建 `data/`，并从旧版本（XAssistant / PressViewer）的 `%APPDATA%` 复制已有记录。
 
-开机自启、关闭行为（最小化到托盘 / 直接退出）、自动开始监测，都在「设置」页里。
+开机自启、关闭行为（最小化到托盘 / 直接退出）、自动开始监测，都在「设置」页里。开了开机自启之后走的是登录计划任务，以最高权限静默启动，不会再弹提示。
+
+> 为什么要管理员权限：键盘、鼠标的全局钩子受系统的权限隔离（UIPI）限制，普通权限进程收不到更高权限进程的输入。而《绝区零》《原神》这类游戏的可执行文件本身就声明了 `requireAdministrator`，不提权就完全记录不到游戏内的操作。
 
 ## 数据与隐私
 
